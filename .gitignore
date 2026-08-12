@@ -1,0 +1,30 @@
+# Local third-party references (not published)
+/00_reference/
+
+# IDE and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Keil generated output and user state
+**/Project/output/
+**/Project/RoboMentors_Board/
+**/Project/DebugConfig/
+**/Project/.trae/
+04_firmware/**/*.axf
+04_firmware/**/*.crf
+04_firmware/**/*.d
+04_firmware/**/*.dep
+04_firmware/**/*.lnp
+04_firmware/**/*.map
+04_firmware/**/*.htm
+04_firmware/**/*.log
+04_firmware/**/*.uvoptx
+04_firmware/**/*.uvguix.*
+04_firmware/**/JLinkSettings.ini
+04_firmware/**/JLinkLog.txt
+
+# Temporary and backup files
+*.Bak
+~$*
