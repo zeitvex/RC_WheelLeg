@@ -11,7 +11,7 @@
 * 主要平台：16DOF 串联轮足机器人
 * 当前仓库版本：16DOF 串联轮足实机验证版（8DOF升级16DOF验证版）
 
-感谢 Lain 佬的 [LocoWiki](https://github.com/LocoWiki/LocoWiki) 项目对早期方案的大量参考与启发以及青年顾问组对本战队的大力支持与帮助，特别感谢留形科技为 2026 赛季提供的独家赞助与技术支持。
+感谢Robocon青年顾问组对本战队的帮助与支持，感谢 Lain 佬的 [LocoWiki](https://github.com/LocoWiki/LocoWiki) 项目对早期方案的参考与启发，特别感谢留形科技为 2026 赛季提供的独家赞助与技术支持。
 
 ## 开源内容
 
