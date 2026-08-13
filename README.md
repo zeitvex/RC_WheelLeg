@@ -20,6 +20,7 @@
 * 本目录为中后期8DOF升级16DOF 初版机械和软件资料，包含SolidWorks 机械源文件，第一代 mjlab 训练任务和本地依赖、MuJoCo、Sim2Sim 和 MJCF及 IK 真机控制与第一代 Python Sim2Real，部分文档及调试注意事项。
 * 后期 16DOF RL 四轮足版本的机械和软件资料，覆盖从训练、仿真到真机部署的完整链路，正在持续整理中。
 * 后续将继续补充 16DOF 完整机械、硬件、软件、BOM、装配和部署资料。
+* 上版本8DOF请查看[8dof分支](https://github.com/zeitvex/RC_WheelLeg/tree/8dof)
 
 项目主仓库：[RC\_WheelLeg](https://github.com/zeitvex/RC_WheelLeg)
 
