@@ -1,18 +1,15 @@
-# 实机图片与视频
+# 媒体与测试结果
 
-本目录保存 8DOF 串联足机器人通过中期检查时的实机展示材料。
+本目录用于保存 16DOF 轮足机器人的原创图片、演示视频、测试图表和比赛结果。
 
-## 图片
+## 第一代 Sim2Real 真机验证
 
-- [`robot_front.jpg`](robot_front.jpg)：机器人正面
-- [`robot_side.jpg`](robot_side.jpg)：机器人侧面
-- [`robot_top.jpg`](robot_top.jpg)：机器人俯视
-- [`robot_three_quarter.jpg`](robot_three_quarter.jpg)：机器人斜 45 度视角
+[![第一代 Sim2Real 真机验证](images/early_sim2real_preview.jpg)](videos/early_sim2real.mp4)
 
-原始图片分辨率均为 `5712 x 4284`。
+- 视频：[`videos/early_sim2real.mp4`](videos/early_sim2real.mp4)
+- 阶段：第一代真机控制与 Sim2Real
+- 时长：约 41 秒
+- 画面：720 x 1280
+- 编码：H.264/AAC，便于网页端和常用播放器播放
 
-## 视频
-
-- [`midterm_inspection.mp4`](midterm_inspection.mp4)：中期检查实机视频，约 60 秒，`1280 x 720`、30 FPS
-
-当前媒体总量约 33 MB，单个文件均未超过常见 Git 托管平台的 100 MB 限制，可以随 `8dof` 分支提交。
+大体积视频和完整日志建议作为 Release 附件发布；体积较小、对版本说明有直接价值的演示视频可随对应版本提交。

@@ -1,0 +1,45 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Build Sphinx Documentation
+        run: uv run --group docs sphinx-multiversion docs docs/_build
+
+      - name: Add root redirect
+        run: echo '<meta http-equiv="refresh" content="0; url=main/index.html">' > docs/_build/index.html
+
+      - name: Remove Sphinx build artifacts
+        run: find docs/_build -type d -name .doctrees -exec rm -rf {} +
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/
+          keep_files: true

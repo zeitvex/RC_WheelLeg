@@ -1,0 +1,7 @@
+numpy
+PyYAML
+torch
+pyserial
+
+# Optional:
+# pynput        # only needed for CLI keyboard control

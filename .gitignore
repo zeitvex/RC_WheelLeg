@@ -1,29 +1,47 @@
-# Local third-party references (not published)
+# Local reference material
 /00_reference/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.uv-cache/
+
+# Build outputs
+build/
+install/
+devel/
+log/
+*.o
+*.so
+*.a
+*.elf
+*.hex
+*.bin
+*.axf
+
+# Required vendored Odin runtime libraries in the early Sim2Real release
+!05_software/real/sim2real/vendored/odin1_imu/build/
+!05_software/real/sim2real/vendored/odin1_imu/build/libodin1_imu_bridge.so
+!05_software/real/sim2real/vendored/odin1_imu/lib/*.a
+
+# Training outputs
+logs/
+checkpoints/
+wandb/
+sim2sim_log_*.txt
 
 # IDE and operating system files
 .idea/
 .vscode/
+.trae/
 .DS_Store
 Thumbs.db
-
-# Keil generated output and user state
-**/Project/output/
-**/Project/RoboMentors_Board/
-**/Project/DebugConfig/
-**/Project/.trae/
-04_firmware/**/*.axf
-04_firmware/**/*.crf
-04_firmware/**/*.d
-04_firmware/**/*.dep
-04_firmware/**/*.lnp
-04_firmware/**/*.map
-04_firmware/**/*.htm
-04_firmware/**/*.log
-04_firmware/**/*.uvoptx
-04_firmware/**/*.uvguix.*
-04_firmware/**/JLinkSettings.ini
-04_firmware/**/JLinkLog.txt
 
 # Temporary and backup files
 *.Bak
