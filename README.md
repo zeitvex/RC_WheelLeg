@@ -31,7 +31,7 @@
 |成员|方向|主要职责|联系方式|
 |-|-|-|-|
 |晨小荼(chentu12)|队长 / 算法|构建初创平台；前期负责 8DOF 平台构建与算法，参与硬件和算法方案讨论；后期负责 16DOF 轮足机器人 Odin1 平台建设与硬件实现，负责企业及组委对接，持续推进项目落地。|WX: `r15288746596`<br>QQ: `2898468947`|
-|[时维](https://github.com/zeitvex)|技术负责人 / 项目管理|主导中后期 16DOF 轮足机器人的软件与控制架构，参与机械与硬件方案确定；负责强化学习训练、仿真验证、真机部署、导航集成及项目进度推进和体系建设。|WX: `zeitvex`<br>QQ: `3156045992`|
+|[时维](https://github.com/zeitvex)|技术负责人 / 项管|主导中后期 16DOF 轮足机器人的软件与控制架构，参与机械与硬件方案确定；负责强化学习训练、仿真验证、真机部署、导航集成及项目进度推进和体系建设。|WX: `zeitvex`<br>QQ: `3156045992`|
 |Dichen(Dichen33)|电控 / 算法|负责电控与算法软件架构设计及系统集成。前期完成 8DOF 电机控制、CAN 通信、PID、腿部逆解与步态调试；中后期面向 16DOF 平台负责电机控制、传感器接入、状态估计和导航链路开发，辅助 Odin 接入，并参与仿真验证、强化学习训练及真机部署。|WX: `Dichenccc`<br>QQ: `3357573813`|
 |[Sulcunfu](https://github.com/wusi321)|电控 / 机械|参与前期 8DOF 及中后期 8DOF 到 16DOF 的机械升级设计；负责模型总装配、URDF 导出、仿真和算法验证，参与强化学习模型训练优化，配置 Linux 基础部署环境，对接 Odin1 视觉感知、里程计和 IMU 数据，并负责环境建图及导出。|WX: `LcfNotFound`<br>QQ: `3299459360`|
 |[王书琪](https://github.com/Beni-537)|机械 / 硬件|负责整机机械结构设计与电气硬件系统搭建；负责 8DOF 开源机械结构的硬件适配，以及 16DOF 架构整体机械结构的建模、优化和 CNC 供应链对接；负责电源管理 PCB 设计与 CAN 总线通信拓扑，为算法和仿真部署提供高刚度、高稳定性的硬件基础。|WX: `DouSfJade`<br>QQ: `3070940094`|
@@ -43,7 +43,7 @@
 * 轮足开源交流群：[点击加入 QQ 群](https://qm.qq.com/q/HkdRYwtAYg)
 * 群号：`767195310`
 
-![轮足开源交流群二维码](06_assets/images/qq.jpg)
+<img src="06_assets/images/qq.jpg" alt="轮足开源交流群二维码" width="20%">
 
 欢迎在群内交流机械设计、硬件搭建、下位机控制、仿真训练、强化学习和真机部署相关问题，也欢迎对资料整理提出建议。
 
@@ -51,7 +51,13 @@
 
 当前仓库包含第一代 Sim2Real 真机测试记录，视频与预览图位于 `06\_assets/`：
 
-[![第一代 Sim2Real 真机验证](06_assets/images/early_sim2real_preview.jpg)](06_assets/videos/early_sim2real.mp4)
+<a href="06_assets/videos/early_sim2real.mp4">
+  <img
+    src="06_assets/images/early_sim2real_preview.jpg"
+    alt="第一代 Sim2Real 真机验证"
+    width="20%"
+  >
+</a>
 
 该视频对应当前第一代 Python Sim2Real 与真机部署实现，时长约 41 秒。点击预览图可播放或下载原视频。
 
