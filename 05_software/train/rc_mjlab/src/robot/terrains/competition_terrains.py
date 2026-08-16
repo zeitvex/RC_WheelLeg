@@ -24,9 +24,9 @@ _COLOR_PURPLE = (0.60, 0.20, 0.80)
 
 @dataclass(kw_only=True)
 class RCWallTerrainCfg(SubTerrainCfg):
-    """Transverse wall obstacle terrain representing the race high wall.
+    """Triple transverse wall obstacle terrain representing repeated race high walls.
 
-    The robot must sprint from the flat platform, vault over the wall, and proceed.
+    The robot must sprint from the flat platform, vault over three walls, and proceed.
     As difficulty scales from 0 to 1, the wall height increases linearly from
     wall_height_range[0] to wall_height_range[1].
     
@@ -42,6 +42,8 @@ class RCWallTerrainCfg(SubTerrainCfg):
     """Wall length fraction of the terrain width (leaving gaps for visualization/debugging)."""
     platform_width: float = 1.5
     """Sprint platform width (m)."""
+    wall_centers_x: tuple[float, float, float] = (2.9, 4.45, 6.0)
+    """Wall center positions along x, spaced to keep a short sprint, two recovery gaps, and exit room."""
 
     def function(
         self,
@@ -67,26 +69,26 @@ class RCWallTerrainCfg(SubTerrainCfg):
             origin = np.array([self.size[0] / 2, self.size[1] / 2, 0.0])
             return TerrainOutput(origin=origin, geometries=geometries)
 
-        # -- Wall geometry: centered on x-midline, oriented along y-axis --
+        # -- Wall geometry: three transverse walls oriented along y-axis --
         wall_length = self.wall_length_frac * self.size[1]
-        cx = self.size[0] / 2
         cy = self.size[1] / 2
 
         wall_color = brand_ramp(_COLOR_ORANGE, difficulty)
 
-        wall_geom = body.add_geom(
-            type=mujoco.mjtGeom.mjGEOM_BOX,
-            size=(
-                self.wall_thickness / 2,       # half-size x
-                wall_length / 2,               # half-size y
-                wall_height / 2,               # half-size z
-            ),
-            pos=(cx, cy, wall_height / 2),
-        )
-        geometries.append(TerrainGeometry(geom=wall_geom, color=wall_color))
+        for cx in self.wall_centers_x:
+            wall_geom = body.add_geom(
+                type=mujoco.mjtGeom.mjGEOM_BOX,
+                size=(
+                    self.wall_thickness / 2,   # half-size x
+                    wall_length / 2,           # half-size y
+                    wall_height / 2,           # half-size z
+                ),
+                pos=(cx, cy, wall_height / 2),
+            )
+            geometries.append(TerrainGeometry(geom=wall_geom, color=wall_color))
 
-        # Spawn origin is set to the left platform area (e.g., 1.5m) to allow
-        # the robot ample room to sprint/accelerate instead of spawning directly inside the obstacle.
+        # Spawn origin is set to the left platform area to allow a short sprint
+        # before the first wall and limited recovery space between subsequent walls.
         origin = np.array([1.5, cy, 0.0])
         return TerrainOutput(origin=origin, geometries=geometries)
 

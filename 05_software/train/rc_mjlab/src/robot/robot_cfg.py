@@ -27,13 +27,13 @@ def get_spec() -> mujoco.MjSpec:
 
 
 # All 16 actuators have identical physical specs: effort limit = 17 Nm, max velocity = 13 rad/s.
-# Leg joints: Position PD control (referenced from HIMLoco Go2W: kp = 40, kd = 1).
-STIFFNESS_LEG = 40.0
-DAMPING_LEG = 1.0
+# Leg joints: Position PD control aligned with current real deployment.
+STIFFNESS_LEG = 50.0
+DAMPING_LEG = 1.5
 EFFORT_LEG = 17.0
 
-# Wheel joints: Velocity control with damping = 0.5 and effort limit = 17 Nm.
-DAMPING_WHEEL = 0.5
+# Wheel joints: Velocity control aligned with current real deployment.
+DAMPING_WHEEL = 1.0
 EFFORT_WHEEL = 17.0
 
 # Maximum joint speed for all actuators (rad/s)
@@ -110,4 +110,4 @@ def get_robot_crawl_cfg() -> EntityCfg:
 # Action scale: Leg target position is ±0.25 rad, wheel target velocity is ±10.0 rad/s.
 # (Policy output range ±1 maps to wheel speeds ±10 rad/s, staying well within the max velocity of 13 rad/s).
 LEG_POS_SCALE = 0.25
-WHEEL_VEL_SCALE = 10.0
+WHEEL_VEL_SCALE = 5.0

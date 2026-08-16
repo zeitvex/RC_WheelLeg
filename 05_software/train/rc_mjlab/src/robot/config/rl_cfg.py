@@ -33,10 +33,10 @@ def rough_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             value_loss_coef=1.0,
             use_clipped_value_loss=True,
             clip_param=0.2,
-            entropy_coef=0.002,
+            entropy_coef=0.001,#第一轮为0.003
             num_learning_epochs=5,
             num_mini_batches=4,
-            learning_rate=2.0e-4,
+            learning_rate=8.0e-4,
             schedule="adaptive",
             gamma=0.99,
             lam=0.95,
@@ -44,9 +44,9 @@ def rough_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             max_grad_norm=1.0,
         ),
         experiment_name="robot_rough",
-        save_interval=50,
+        save_interval=100,
         num_steps_per_env=24,
-        max_iterations=15_000,
+        max_iterations=20_000,
     )
 
 
@@ -54,6 +54,4 @@ def crawl_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
     cfg = rough_ppo_runner_cfg()
     cfg.experiment_name = "robot_crawl"
     return cfg
-
-
 

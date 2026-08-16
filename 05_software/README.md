@@ -1,11 +1,11 @@
 # 软件
 
-本目录当前保存 16DOF 轮足机器人的第一代完整软件闭环。
+本目录保存 16DOF 轮足机器人的训练、仿真和真机软件演进。
 
 ```text
 05_software/
 ├─ train/
-│  └─ rc_mjlab/       # 训练、MJCF、MuJoCo、Sim2Sim 和本地 mjlab 依赖
+│  └─ rc_mjlab/       # 训练、MJCF、Sim2Sim 和本地 mjlab 依赖
 └─ real/
    ├─ ik_real/        # IK 轨迹与早期真机控制
    └─ sim2real/       # 第一代 Python 策略真机部署
@@ -19,8 +19,6 @@ MJCF + mjlab task
         v
    PPO 训练策略
         |
-        +----> MuJoCo 独立模型调试
-        |
         +----> Sim2Sim 策略验证
         |
         +----> Python Sim2Real ----> 电机 / IMU
@@ -28,7 +26,7 @@ MJCF + mjlab task
 IK real --------------------------------> 电机
 ```
 
-`rc_mjlab` 在早期版本中是自包含工程。训练、MJCF、独立 MuJoCo、Sim2Sim 和策略权重通过相对路径绑定，因此本次保留其原始内部布局，没有为了目录外观拆散。
+`rc_mjlab` 是自包含工程。训练、MJCF、Sim2Sim 和策略权重通过相对路径绑定，因此保留其内部布局，没有为了目录外观拆散。第一代完整闭环见 `v0.3.0`，第一份新版 MJCF 与训练框架见 `v0.4.0`。
 
 详细说明见：
 

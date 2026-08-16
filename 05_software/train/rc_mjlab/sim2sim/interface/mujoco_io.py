@@ -25,7 +25,7 @@ class MuJoCoIO:
         print("[MuJoCoIO] Loading MuJoCo model...")
         spec = mujoco.MjSpec.from_file(str(temp_xml))
         
-        # Override actuators to match mjlab exactly
+        # Override actuators to match training/runtime actuator semantics.
         self._rebuild_actuators(spec)
         
         self.m = spec.compile()
@@ -91,8 +91,10 @@ class MuJoCoIO:
         for act in actuators_to_delete:
             spec.delete(act)
         
-        KP_LEG, KD_LEG = 40.0, 1.0
-        KD_WHEEL = 0.5
+        # Keep sim2sim aligned with the training robot config and sim2real runtime:
+        # leg position PD = (50.0, 1.5), wheel velocity damping = 1.0.
+        KP_LEG, KD_LEG = 50.0, 1.5
+        KD_WHEEL = 1.0
         EFFORT_LIMIT = 17.0
         
         leg_jnames = [

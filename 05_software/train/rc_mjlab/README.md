@@ -2,6 +2,8 @@
 
 基于 [mjlab](https://github.com/google-deepmind/mjlab) 框架的四轮腿混合机器人强化学习训练与部署部署项目，面向机器人竞赛场景（如越障、匍匐、斜坡、台阶等复合任务）。
 
+> 本目录对应 `v0.4.0`：第一份完整的新 MJCF 与新框架训练工程。该快照包含 `model_rough.pt`；未包含独立 `mujoco_sim` 工具和单独的 Crawl 策略权重，相关早期内容仍可通过 `v0.3.0` 查看。
+
 ---
 
 ## 🛠️ 项目简介
@@ -51,8 +53,7 @@ rc_mjlab/
 │   ├── wheelleg.xml              # 机器人 MuJoCo 模型（含网格引用）
 │   ├── scene.xml                 # mjlab 场景入口文件
 │   └── meshes/                   # STL/OBJ 碰撞与外观网格
-├── mujoco_sim/                   # 独立 MPC 仿真调试工具（不依赖 RL 训练）
-├── logs/                         # 训练日志（rsl_rl 格式，按任务名/日期/checkpoint 归档）
+├── model_rough.pt                # 本阶段用于回放和 Sim2Sim 的 Rough 策略
 ├── pyproject.toml                # 项目依赖（uv 管理，含清华镜像源加速）
 └── uv.lock                       # 精确依赖锁定文件
 ```

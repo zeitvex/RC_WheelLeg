@@ -184,7 +184,7 @@ class ManagerBasedRlEnv:
     # Initialize base environment state.
     self.cfg = cfg
     if self.cfg.seed is not None:
-      self.cfg.seed = self.seed(self.cfg.seed, device=device)
+      self.cfg.seed = self.seed(self.cfg.seed)
     self._sim_step_counter = 0
     self.extras = {}
     self.obs_buf = {}
@@ -194,21 +194,13 @@ class ManagerBasedRlEnv:
 
     # Initialize scene and simulation.
     self.scene = Scene(self.cfg.scene, device=device)
-    if self.scene.has_mesh_variants:
-      self.sim = Simulation(
-        num_envs=self.scene.num_envs,
-        cfg=self.cfg.sim,
-        spec=self.scene.spec,
-        variant_info=self.scene.collect_variant_info(),
-        device=device,
-      )
-    else:
-      self.sim = Simulation(
-        num_envs=self.scene.num_envs,
-        cfg=self.cfg.sim,
-        model=self.scene.compile(),
-        device=device,
-      )
+    self.sim = Simulation(
+      num_envs=self.scene.num_envs,
+      cfg=self.cfg.sim,
+      spec=self.scene.spec,
+      variant_info=self.scene.collect_variant_info(),
+      device=device,
+    )
 
     self.scene.initialize(
       mj_model=self.sim.mj_model,
@@ -373,6 +365,7 @@ class ManagerBasedRlEnv:
       env_ids = torch.arange(self.num_envs, dtype=torch.int64, device=self.device)
     if seed is not None:
       self.seed(seed)
+    self.extras["log"] = dict()
     self._reset_idx(env_ids)
     self.scene.write_data_to_sim()
     self.sim.forward()
@@ -422,6 +415,7 @@ class ManagerBasedRlEnv:
         "reset(env_ids=...) before calling step() again when auto_reset=False."
       )
 
+    self.extras["log"] = dict()
     self.action_manager.process_action(action.to(self.device))
 
     for _ in range(self.cfg.decimation):
@@ -484,6 +478,9 @@ class ManagerBasedRlEnv:
       self.extras,
     )
 
+  def get_observations(self) -> dict:
+    return self.observation_manager.compute()
+
   def render(self) -> np.ndarray | None:
     if self.render_mode == "human" or self.render_mode is None:
       return None
@@ -506,11 +503,12 @@ class ManagerBasedRlEnv:
       self._offline_renderer.close()
     self.recorder_manager.close()
 
-  def seed(self, seed: int = -1, device: str | torch.device | None = None) -> int:
+  @staticmethod
+  def seed(seed: int = -1) -> int:
     if seed == -1:
       seed = np.random.randint(0, 10_000)
     print_info(f"Setting seed: {seed}")
-    random_utils.seed_rng(seed, device=device if device is not None else self.device)
+    random_utils.seed_rng(seed)
     return seed
 
   def update_visualizers(self, visualizer: DebugVisualizer) -> None:
@@ -564,7 +562,6 @@ class ManagerBasedRlEnv:
       )
 
     # NOTE: This is order sensitive.
-    self.extras["log"] = dict()
     # observation manager.
     info = self.observation_manager.reset(env_ids)
     self.extras["log"].update(info)

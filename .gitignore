@@ -35,6 +35,7 @@ logs/
 checkpoints/
 wandb/
 sim2sim_log_*.txt
+**/sim2sim_temp.xml
 
 # IDE and operating system files
 .idea/

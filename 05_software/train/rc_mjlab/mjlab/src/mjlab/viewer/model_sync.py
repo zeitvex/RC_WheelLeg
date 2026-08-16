@@ -25,6 +25,7 @@ VIEWER_MODEL_FIELDS = frozenset(
   {
     "qpos0",  # Needed for correct mj_forward kinematics (qpos - qpos0).
     "geom_dataid",  # Per-world mesh variants.
+    "geom_matid",  # Per-world material variants.
     "geom_rgba",
     "geom_size",
     "geom_pos",

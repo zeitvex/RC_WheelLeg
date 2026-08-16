@@ -21,6 +21,38 @@ if TYPE_CHECKING:
   from mjlab.viewer.debug_visualizer import DebugVisualizer
 
 _DEFAULT_ASSET_CFG = SceneEntityCfg("robot")
+_SE3_KEYS = ("x", "y", "z", "roll", "pitch", "yaw")
+
+
+def _sample_se3_range(
+  range_dict: dict[str, tuple[float, float]] | None,
+  shape: tuple[int, ...],
+  device: str,
+) -> torch.Tensor:
+  """Sample uniform ``[x, y, z, roll, pitch, yaw]`` offsets.
+
+  ``range_dict`` maps any subset of those keys to ``(min, max)`` ranges; missing
+  keys default to ``(0.0, 0.0)`` (no offset). ``None`` is treated as empty. The
+  returned tensor has the requested ``shape`` whose last dimension must be 6.
+  """
+  range_dict = range_dict or {}
+  range_list = [range_dict.get(key, (0.0, 0.0)) for key in _SE3_KEYS]
+  ranges = torch.tensor(range_list, device=device)
+  return sample_uniform(ranges[:, 0], ranges[:, 1], shape, device=device)
+
+
+def resolve_env_ids(
+  env: ManagerBasedRlEnv, env_ids: torch.Tensor | None
+) -> torch.Tensor:
+  """Return ``env_ids`` unchanged, or all environment indices if ``None``.
+
+  Event functions receive ``env_ids=None`` to mean "all environments" (a full
+  reset, or a global-time interval term). This normalizes that sentinel to a
+  concrete index tensor so the function body can assume a real ``torch.Tensor``.
+  """
+  if env_ids is None:
+    return torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+  return env_ids
 
 
 def randomize_terrain(env: ManagerBasedRlEnv, env_ids: torch.Tensor | None) -> None:
@@ -29,8 +61,7 @@ def randomize_terrain(env: ManagerBasedRlEnv, env_ids: torch.Tensor | None) -> N
   This picks a random terrain type (column) and difficulty level (row) for each
   environment. Useful for play/evaluation mode to test on varied terrains.
   """
-  if env_ids is None:
-    env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+  env_ids = resolve_env_ids(env, env_ids)
 
   terrain = env.scene.terrain
   if terrain is not None:
@@ -48,8 +79,7 @@ def reset_scene_to_default(
 
   Automatically applies env_origins offset to position all entities correctly.
   """
-  if env_ids is None:
-    env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+  env_ids = resolve_env_ids(env, env_ids)
 
   for entity in env.scene.entities.values():
     if not isinstance(entity, Entity):
@@ -105,19 +135,12 @@ def reset_root_state_uniform(
     velocity_range: Velocity range (only used for floating-base entities).
     asset_cfg: Asset configuration.
   """
-  if env_ids is None:
-    env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+  env_ids = resolve_env_ids(env, env_ids)
 
   asset: Entity = env.scene[asset_cfg.name]
 
   # Pose.
-  range_list = [
-    pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z", "roll", "pitch", "yaw"]
-  ]
-  ranges = torch.tensor(range_list, device=env.device)
-  pose_samples = sample_uniform(
-    ranges[:, 0], ranges[:, 1], (len(env_ids), 6), device=env.device
-  )
+  pose_samples = _sample_se3_range(pose_range, (len(env_ids), 6), env.device)
 
   # Fixed-based entities with mocap=True.
   if asset.is_fixed_base:
@@ -157,16 +180,7 @@ def reset_root_state_uniform(
   orientations = quat_mul(root_states[:, 3:7], orientations_delta)
 
   # Velocities.
-  if velocity_range is None:
-    velocity_range = {}
-  range_list = [
-    velocity_range.get(key, (0.0, 0.0))
-    for key in ["x", "y", "z", "roll", "pitch", "yaw"]
-  ]
-  ranges = torch.tensor(range_list, device=env.device)
-  vel_samples = sample_uniform(
-    ranges[:, 0], ranges[:, 1], (len(env_ids), 6), device=env.device
-  )
+  vel_samples = _sample_se3_range(velocity_range, (len(env_ids), 6), env.device)
   velocities = root_states[:, 7:13] + vel_samples
 
   asset.write_root_link_pose_to_sim(
@@ -199,8 +213,7 @@ def reset_root_state_from_flat_patches(
     velocity_range: Optional velocity range (floating-base only).
     asset_cfg: Asset configuration.
   """
-  if env_ids is None:
-    env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+  env_ids = resolve_env_ids(env, env_ids)
 
   terrain = env.scene.terrain
   if terrain is None or patch_name not in terrain.flat_patches:
@@ -230,15 +243,7 @@ def reset_root_state_from_flat_patches(
   root_states = default_root_state[env_ids].clone()
 
   # Apply optional pose range offset.
-  if pose_range is None:
-    pose_range = {}
-  range_list = [
-    pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z", "roll", "pitch", "yaw"]
-  ]
-  ranges = torch.tensor(range_list, device=env.device)
-  pose_samples = sample_uniform(
-    ranges[:, 0], ranges[:, 1], (len(env_ids), 6), device=env.device
-  )
+  pose_samples = _sample_se3_range(pose_range, (len(env_ids), 6), env.device)
 
   # Position: flat patch position + optional offset. Use patch z instead of default.
   final_positions = positions.clone()
@@ -262,16 +267,7 @@ def reset_root_state_from_flat_patches(
     return
 
   # Velocities.
-  if velocity_range is None:
-    velocity_range = {}
-  vel_range_list = [
-    velocity_range.get(key, (0.0, 0.0))
-    for key in ["x", "y", "z", "roll", "pitch", "yaw"]
-  ]
-  vel_ranges = torch.tensor(vel_range_list, device=env.device)
-  vel_samples = sample_uniform(
-    vel_ranges[:, 0], vel_ranges[:, 1], (len(env_ids), 6), device=env.device
-  )
+  vel_samples = _sample_se3_range(velocity_range, (len(env_ids), 6), env.device)
   velocities = root_states[:, 7:13] + vel_samples
 
   asset.write_root_link_pose_to_sim(
@@ -287,8 +283,7 @@ def reset_joints_by_offset(
   velocity_range: tuple[float, float],
   asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> None:
-  if env_ids is None:
-    env_ids = torch.arange(env.num_envs, device=env.device, dtype=torch.int)
+  env_ids = resolve_env_ids(env, env_ids)
 
   asset: Entity = env.scene[asset_cfg.name]
   default_joint_pos = asset.data.default_joint_pos
@@ -320,28 +315,60 @@ def reset_joints_by_offset(
 
 def push_by_setting_velocity(
   env: ManagerBasedRlEnv,
-  env_ids: torch.Tensor,
+  env_ids: torch.Tensor | None,
   velocity_range: dict[str, tuple[float, float]],
   asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> None:
+  """Push an entity by overwriting its root velocity with a sampled offset.
+
+  This is an *instantaneous, mass-independent* kick: it adds a uniformly sampled
+  delta directly to the root velocity, ignoring inertia and contact dynamics. It
+  is the cheapest disturbance and the standard locomotion "push the robot" term.
+  Use with ``mode="interval"``.
+
+  For force-based disturbances that respect the entity's dynamics, see
+  :func:`apply_external_force_torque` (a constant wrench you manage yourself) or
+  :class:`apply_body_impulse` (transient, self-managing impulses).
+  """
+  env_ids = resolve_env_ids(env, env_ids)
   asset: Entity = env.scene[asset_cfg.name]
   vel_w = asset.data.root_link_vel_w[env_ids]
-  range_list = [
-    velocity_range.get(key, (0.0, 0.0))
-    for key in ["x", "y", "z", "roll", "pitch", "yaw"]
-  ]
-  ranges = torch.tensor(range_list, device=env.device)
-  vel_w += sample_uniform(ranges[:, 0], ranges[:, 1], vel_w.shape, device=env.device)
+  vel_w += _sample_se3_range(velocity_range, vel_w.shape, env.device)
   asset.write_root_link_velocity_to_sim(vel_w, env_ids=env_ids)
 
 
 def apply_external_force_torque(
   env: ManagerBasedRlEnv,
-  env_ids: torch.Tensor,
+  env_ids: torch.Tensor | None,
   force_range: tuple[float, float],
   torque_range: tuple[float, float],
   asset_cfg: SceneEntityCfg = _DEFAULT_ASSET_CFG,
 ) -> None:
+  """Apply a single *constant* external wrench to bodies.
+
+  Samples a force and torque once and writes them to ``xfrc_applied``. The wrench
+  is **stateless and never expires**: MuJoCo holds it constant on every physics
+  step until something overwrites or zeroes it. There is no duration, cooldown,
+  or auto-clear.
+
+  **When to use this vs.** :class:`apply_body_impulse`:
+
+  - Use ``apply_external_force_torque`` for a *steady, episode-long* disturbance
+    such as a fixed payload, a constant wind, or a sustained load. The intended
+    pattern is ``mode="reset"``: re-randomize the wrench each episode so it holds
+    for that episode's duration. Because it never turns itself off, **you are
+    responsible for clearing or overwriting it** (e.g. via the next reset). It is
+    *not* suited to transient bumps on its own.
+
+  - Use :class:`apply_body_impulse` for *transient, repeated, randomized*
+    disturbances during an episode (bumps, gusts, collisions). It runs a full
+    cooldown -> trigger -> sustain -> expire lifecycle per environment, zeroing
+    the wrench automatically when each impulse ends, and ticks on ``mode="step"``.
+
+  For an instantaneous, mass-independent kick instead of a force, see
+  :func:`push_by_setting_velocity`.
+  """
+  env_ids = resolve_env_ids(env, env_ids)
   asset: Entity = env.scene[asset_cfg.name]
   num_bodies = (
     len(asset_cfg.body_ids)
@@ -385,6 +412,10 @@ class apply_body_impulse:
   applied.
 
   Use with ``mode="step"``.
+
+  For a *constant* episode-long wrench instead of transient impulses, see
+  :func:`apply_external_force_torque`. For an instantaneous, mass-independent
+  velocity kick, see :func:`push_by_setting_velocity`.
   """
 
   @dataclass
@@ -422,9 +453,16 @@ class apply_body_impulse:
       else self._asset.num_bodies
     )
 
+    self._cooldown_s: tuple[float, float] = cfg.params["cooldown_s"]
     self._time_remaining = torch.zeros(self._num_envs, device=self._device)
-    self._interval_time_left = torch.zeros(self._num_envs, device=self._device)
     self._active = torch.zeros(self._num_envs, device=self._device, dtype=torch.bool)
+    # Pre-sample the initial cooldown so the first impulse is preceded by a cooldown
+    # rather than firing immediately at t=0.
+    self._interval_time_left = self._sample_cooldown(self._num_envs)
+
+  def _sample_cooldown(self, n: int) -> torch.Tensor:
+    low, high = self._cooldown_s
+    return sample_uniform(low, high, n, self._device)
 
   def __call__(
     self,
@@ -446,13 +484,14 @@ class apply_body_impulse:
       torque_range: ``(min, max)`` uniform range for each torque component (Nm).
       duration_s: ``(min, max)`` uniform range for impulse duration in seconds.
       cooldown_s: ``(min, max)`` uniform range for the cooldown between consecutive
-        impulses in seconds.
+        impulses in seconds. Captured at init so the first impulse can be
+        preceded by a sampled cooldown; the kwarg passed here is unused.
       asset_cfg: Entity and body selection. ``body_ids`` on the config selects which
         bodies receive forces.
       body_point_offset: Optional ``(x, y, z)`` offset in the body frame where the
         force is applied. Generates additional torque via ``cross(offset, force)``.
     """
-    del env, env_ids, asset_cfg  # Unused.
+    del env, env_ids, asset_cfg, cooldown_s  # Unused at call time.
     dt = self._step_dt
 
     # Decrement timers for active envs.
@@ -468,11 +507,7 @@ class apply_body_impulse:
       )
       self._active[expired_ids] = False
       self._time_remaining[expired_ids] = 0.0
-      int_low, int_high = cooldown_s
-      self._interval_time_left[expired_ids] = (
-        torch.rand(len(expired_ids), device=self._device) * (int_high - int_low)
-        + int_low
-      )
+      self._interval_time_left[expired_ids] = self._sample_cooldown(len(expired_ids))
 
     # Decrement interval timers.
     self._interval_time_left -= dt
@@ -514,10 +549,7 @@ class apply_body_impulse:
     self._active[trigger_ids] = True
 
     # Resample interval timers.
-    int_low, int_high = cooldown_s
-    self._interval_time_left[trigger_ids] = (
-      torch.rand(n, device=self._device) * (int_high - int_low) + int_low
-    )
+    self._interval_time_left[trigger_ids] = self._sample_cooldown(n)
 
   def debug_vis(self, visualizer: DebugVisualizer) -> None:
     """Draw arrows for active impulse forces."""
@@ -553,13 +585,7 @@ class apply_body_impulse:
     if env_ids is None:
       env_ids = slice(None)
 
-    # Clear forces for reset envs.
-    if isinstance(env_ids, slice):
-      reset_ids = env_ids
-    else:
-      reset_ids = env_ids
-
-    if self._active[reset_ids].any():
+    if self._active[env_ids].any():
       if isinstance(env_ids, slice):
         active_ids = self._active.nonzero(as_tuple=False).squeeze(-1)
       else:
@@ -573,6 +599,7 @@ class apply_body_impulse:
           zeros, zeros, env_ids=active_ids, body_ids=self._body_ids
         )
 
-    self._time_remaining[reset_ids] = 0.0
-    self._interval_time_left[reset_ids] = 0.0
-    self._active[reset_ids] = False
+    n = self._num_envs if isinstance(env_ids, slice) else len(env_ids)
+    self._time_remaining[env_ids] = 0.0
+    self._interval_time_left[env_ids] = self._sample_cooldown(n)
+    self._active[env_ids] = False

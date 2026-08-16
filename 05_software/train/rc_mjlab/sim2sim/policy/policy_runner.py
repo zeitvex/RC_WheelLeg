@@ -77,6 +77,7 @@ class PolicyRunner:
 
         # Load both policy networks
         self.policies = {}
+        self.policy_obs_dims = {}
         for name, path in self.policy_paths.items():
             print(f"[PolicyRunner] Loading {name} policy from: {path}")
             if Path(path).exists():
@@ -84,6 +85,7 @@ class PolicyRunner:
             else:
                 print(f"[PolicyRunner] WARNING: {name} policy file not found! Falling back to rough.")
                 self.policies[name] = load_policy(self.policy_paths["rough"], device)
+            self.policy_obs_dims[name] = int(self.policies[name].obs_mean.numel())
 
         # Default DOF positions for each policy
         self.default_dof_poses = {
@@ -226,11 +228,23 @@ class PolicyRunner:
 
         raw_actions_out = {}
         for name in active_policies:
-            # Flatten observation history
-            obs_history_array = np.array(self.obs_histories[name])
-            term_dims = [3, 3, 3, 12, 12, 4, 16]
-            term_histories = np.split(obs_history_array, np.cumsum(term_dims)[:-1], axis=1)
-            flat_obs = np.concatenate([h.flatten() for h in term_histories])
+            expected_obs_dim = self.policy_obs_dims[name]
+
+            if expected_obs_dim == current_obs_53d.shape[0]:
+                # Newer policies consume the current 53D observation directly.
+                flat_obs = self.obs_histories[name][-1]
+            elif expected_obs_dim == current_obs_53d.shape[0] * self.history_length:
+                # Legacy policies expect 6-step history stacking grouped by term.
+                obs_history_array = np.array(self.obs_histories[name])
+                term_dims = [3, 3, 3, 12, 12, 4, 16]
+                term_histories = np.split(obs_history_array, np.cumsum(term_dims)[:-1], axis=1)
+                flat_obs = np.concatenate([h.flatten() for h in term_histories])
+            else:
+                raise RuntimeError(
+                    f"Policy '{name}' expects obs dim {expected_obs_dim}, "
+                    f"but sim2sim can only provide {current_obs_53d.shape[0]} or "
+                    f"{current_obs_53d.shape[0] * self.history_length}."
+                )
             
             obs_tensor = torch.tensor(flat_obs, device=self.device, dtype=torch.float32).unsqueeze(0)
             

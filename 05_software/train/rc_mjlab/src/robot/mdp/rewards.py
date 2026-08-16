@@ -28,6 +28,7 @@ def track_linear_velocity(
     actual = asset.data.root_link_lin_vel_b
     xy_error = torch.sum(torch.square(command[:, :2] - actual[:, :2]), dim=1)
     reward = torch.exp(-xy_error / std**2)
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 
@@ -45,6 +46,7 @@ def track_angular_velocity(
     actual = asset.data.root_link_ang_vel_b
     z_error = torch.square(command[:, 2] - actual[:, 2])
     reward = torch.exp(-z_error / std**2)
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 
@@ -94,6 +96,7 @@ def base_height_l2(
         error = root_z - target_height
         
     reward = torch.square(error)
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 
@@ -304,6 +307,7 @@ def stand_still(
     angular_norm = torch.abs(command[:, 2])
     inactive = (linear_norm + angular_norm < command_threshold).float()
     reward = cost * inactive
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 def hip_deviation(
@@ -355,6 +359,20 @@ def lin_vel_z_l2(
         asset_cfg = SceneEntityCfg("robot")
     asset: Entity = env.scene[asset_cfg.name]
     reward = torch.square(asset.data.root_link_lin_vel_b[:, 2])
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
+    return reward
+
+
+def ang_vel_xy_l2(
+    env: ManagerBasedRlEnv,
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Penalize xy-axis base angular velocity using the go2w kernel."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset: Entity = env.scene[asset_cfg.name]
+    reward = torch.sum(torch.square(asset.data.root_link_ang_vel_b[:, :2]), dim=1)
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 
@@ -650,6 +668,8 @@ def feet_contact_without_cmd(env, command_name: str, sensor_name: str) -> torch.
     linear_norm = torch.norm(cmd[:, :2], dim=1)
     angular_norm = torch.abs(cmd[:, 2])
     reward *= (linear_norm + angular_norm) < 0.1
+    asset = env.scene["robot"]
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 def joint_pos_penalty(
@@ -674,6 +694,7 @@ def joint_pos_penalty(
         running_reward,
         stand_still_scale * running_reward,
     )
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 def joint_mirror(env, mirror_joints: list[list[str]], asset_cfg: SceneEntityCfg | None = None) -> torch.Tensor:
@@ -694,6 +715,50 @@ def joint_mirror(env, mirror_joints: list[list[str]], asset_cfg: SceneEntityCfg 
         )
         reward += diff
     reward *= 1 / len(mirror_joints) if len(mirror_joints) > 0 else 0
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
+    return reward
+
+
+def undesired_contacts(
+    env: ManagerBasedRlEnv,
+    sensor_name: str,
+    threshold: float = 1.0,
+) -> torch.Tensor:
+    """Penalize non-wheel contacts above a force threshold."""
+    from mjlab.sensor import ContactSensor
+
+    sensor: ContactSensor = env.scene[sensor_name]
+    data = sensor.data
+    if data.force_history is not None:
+        force_mag = torch.norm(data.force_history, dim=-1)
+        is_contact = torch.max(force_mag, dim=2)[0] > threshold
+    else:
+        force_mag = torch.norm(data.force, dim=-1)
+        is_contact = force_mag > threshold
+    reward = torch.sum(is_contact, dim=1).float()
+    asset = env.scene["robot"]
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
+    return reward
+
+
+def contact_forces(
+    env: ManagerBasedRlEnv,
+    sensor_name: str,
+    threshold: float = 100.0,
+) -> torch.Tensor:
+    """Penalize foot contact forces above threshold."""
+    from mjlab.sensor import ContactSensor
+
+    sensor: ContactSensor = env.scene[sensor_name]
+    data = sensor.data
+    if data.force_history is not None:
+        force_mag = torch.norm(data.force_history, dim=-1)
+        peak_force = torch.max(force_mag, dim=2)[0]
+    else:
+        peak_force = torch.norm(data.force, dim=-1)
+    reward = torch.sum(torch.clamp(peak_force - threshold, min=0.0), dim=1)
+    asset = env.scene["robot"]
+    reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
 
 
@@ -704,6 +769,14 @@ def upward(env, asset_cfg=None):
     asset = env.scene[asset_cfg.name]
     reward = torch.square(1 - asset.data.projected_gravity_b[:, 2])
     return reward
+
+
+def joint_power(env: ManagerBasedRlEnv, asset_cfg: SceneEntityCfg | None = None) -> torch.Tensor:
+    """Penalty for total joint mechanical power: sum(|tau * dq|)."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset: Entity = env.scene[asset_cfg.name]
+    return torch.sum(torch.abs(asset.data.qfrc_actuator * asset.data.joint_vel), dim=1)
 
 def upright_roll_only(env, asset_cfg=None):
     if asset_cfg is None:

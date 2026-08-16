@@ -59,7 +59,7 @@ def run_train(task_id: str, cfg: TrainConfig, log_dir: Path) -> None:
     os.environ["MUJOCO_EGL_DEVICE_ID"] = str(local_rank)
     device = f"cuda:{local_rank}"
     # Set seed to have diversity in different processes.
-    seed = cfg.agent.seed + local_rank
+    seed = cfg.agent.seed + rank
 
   configure_torch_backends()
 
@@ -197,7 +197,6 @@ def launch_training(task_id: str, args: TrainConfig | None = None):
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
   else:
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, selected_gpus))
-  os.environ["MUJOCO_GL"] = "egl"
 
   if num_gpus <= 1:
     # CPU or single GPU: run directly without torchrunx.

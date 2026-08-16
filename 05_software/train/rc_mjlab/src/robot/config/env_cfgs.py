@@ -74,7 +74,11 @@ from ..mdp.rewards import (
     joint_mirror,
     feet_contact_without_cmd,
     upright_roll_only,
-    pitch_control_penalty,
+    upward,
+    joint_power,
+    ang_vel_xy_l2,
+    undesired_contacts,
+    contact_forces,
 )
 from ..mdp.curriculums import terrain_levels_vel_strict
 from ..mdp.commands import UniformThresholdVelocityCommandCfg
@@ -174,7 +178,7 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
             params={"asset_cfg": SceneEntityCfg("robot", joint_names=(".*_wheel_joint",))},
             scale=0.05, noise=Unoise(n_min=-1.0, n_max=1.0),
         ),
-        "actions": ObservationTermCfg(func=velocity_mdp.last_action, history_length=1),
+        "actions": ObservationTermCfg(func=velocity_mdp.last_action),
     }
 
     critic_terms = {
@@ -192,7 +196,7 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
     observations = {
         "actor": ObservationGroupCfg(
             terms=actor_terms, concatenate_terms=True,
-            enable_corruption=True, history_length=6,
+            enable_corruption=True,
         ),
         "critic": ObservationGroupCfg(
             terms=critic_terms, concatenate_terms=True, enable_corruption=False,
@@ -239,8 +243,15 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
         "reset_base": EventTermCfg(
             func=envs_mdp.reset_root_state_uniform, mode="reset",
             params={
-                "pose_range": {"z": (0.30, 0.50), "yaw": (-math.pi, math.pi)},
-                "velocity_range": {"x": (-0.5, 0.5), "y": (-0.15, 0.15), "yaw": (-0.35, 0.35)},
+                "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-math.pi, math.pi)},
+                "velocity_range": {
+                    "x": (-0.5, 0.5),
+                    "y": (-0.5, 0.5),
+                    "z": (-0.5, 0.5),
+                    "roll": (-0.5, 0.5),
+                    "pitch": (-0.5, 0.5),
+                    "yaw": (-0.5, 0.5),
+                },
                 "asset_cfg": SceneEntityCfg("robot"),
             },
         ),
@@ -254,13 +265,9 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
             params={"asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
                     "operation": "add", "ranges": {0: (-0.05, 0.05), 1: (-0.05, 0.05), 2: (-0.05, 0.05)}},
         ),
-        "encoder_bias": EventTermCfg(
-            func=envs_dr.encoder_bias, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", joint_names=(".*",)), "bias_range": (-0.015, 0.015)},
-        ),
         "body_friction": EventTermCfg(
             func=envs_dr.geom_friction, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", geom_names=(".*",)), "operation": "abs", "ranges": (0.3, 1.2)},
+            params={"asset_cfg": SceneEntityCfg("robot", geom_names=(".*",)), "operation": "abs", "ranges": (0.3, 1.0)},
         ),
         "actuator_stiffness": EventTermCfg(
             func=envs_dr.joint_stiffness, mode="startup",
@@ -270,31 +277,12 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
             func=envs_dr.joint_damping, mode="startup",
             params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.9, 1.1), "operation": "scale", "distribution": "log_uniform"},
         ),
-        "actuator_effort_limit": EventTermCfg(
-            func=envs_dr.effort_limits, mode="startup",
-            params={
-                "asset_cfg": SceneEntityCfg("robot"),
-                "effort_limit_range": (0.8, 1.0),
-                "operation": "scale",
-                "distribution": "uniform",
-            },
-        ),
-        "payload_mass": EventTermCfg(
+        "body_mass_base": EventTermCfg(
             func=envs_dr.body_mass, mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
                 "operation": "add",
                 "ranges": (-1.0, 3.0),
-            },
-        ),
-        "continuous_disturbance": EventTermCfg(
-            func=apply_continuous_disturbance, mode="step",
-            params={
-                "asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
-                "force_range": (-15.0, 15.0),
-                "torque_range": (-10.0, 10.0),
-                "resample_time_range": (0.5, 2.0),
-                "time_constant": 0.5,
             },
         ),
     }
@@ -346,8 +334,8 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
         commands=commands, actions=actions, observations=observations,
         rewards=rewards, terminations=terminations, events=events,
-        metrics=metrics, curriculum=curriculum, decimation=10, episode_length_s=20.0,
-        sim=SimulationCfg(mujoco=MujocoCfg(impratio=100, cone="elliptic")),
+        metrics=metrics, curriculum=curriculum, decimation=4, episode_length_s=20.0,
+        sim=SimulationCfg(mujoco=MujocoCfg(timestep=0.005, impratio=100, cone="elliptic")),
         viewer=ViewerConfig(body_name="base_link", distance=3.0, elevation=-20.0, azimuth=45.0),
     )
 
@@ -380,33 +368,36 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
             size=(8.0, 8.0), border_width=20.0, num_rows=10, num_cols=20, curriculum=True,
             sub_terrains={
                 "flat": BoxFlatTerrainCfg(proportion=0.05, size=(8.0, 8.0)),
-                "pyramid_stairs": BoxPyramidStairsTerrainCfg(proportion=0.25, step_height_range=(0.0, 0.3), step_width=0.30, size=(8.0, 8.0)),
-                "pyramid_stairs_inv": BoxInvertedPyramidStairsTerrainCfg(proportion=0.10, step_height_range=(0.0, 0.3), step_width=0.30, size=(8.0, 8.0)),
-                "random_grid": BoxRandomGridTerrainCfg(proportion=0.1, grid_width=0.45, grid_height_range=(0.0, 0.3), size=(8.0, 8.0)),
-                "random_rough": HfRandomUniformTerrainCfg(proportion=0.05, noise_range=(0.0, 0.06), noise_step=0.01, horizontal_scale=0.20, downsampled_scale=0.20, border_width=0.25, base_thickness_ratio=100.0, size=(8.0, 8.0)),
-                "perlin_noise": HfPerlinNoiseTerrainCfg(proportion=0.05, height_range=(0.0, 0.06), octaves=2, persistence=0.4, lacunarity=2.0, horizontal_scale=0.20, resolution=0.20, border_width=0.50, base_thickness_ratio=100.0, size=(8.0, 8.0)),
-                "rc_wall": RCWallTerrainCfg(proportion=0.25, wall_height_range=(0.0, 0.45), size=(8.0, 8.0)),
-                "sloped_terrain": HfPyramidSlopedTerrainCfg(proportion=0.15, slope_range=(0.052, 0.325), platform_width=2.0, border_width=0.25, base_thickness_ratio=100.0, horizontal_scale=0.20, size=(8.0, 8.0)),
+                "pyramid_stairs": BoxPyramidStairsTerrainCfg(proportion=0.05, step_height_range=(0.0, 0.3), step_width=0.30, size=(8.0, 8.0)),
+                "pyramid_stairs_inv": BoxInvertedPyramidStairsTerrainCfg(proportion=0.45, step_height_range=(0.0, 0.3), step_width=0.30, size=(8.0, 8.0)),
+                "random_grid": BoxRandomGridTerrainCfg(proportion=0.27, grid_width=0.45, grid_height_range=(0.0, 0.3), size=(8.0, 8.0)),
+                "random_rough": HfRandomUniformTerrainCfg(proportion=0.01, noise_range=(0.0, 0.06), noise_step=0.01, horizontal_scale=0.20, downsampled_scale=0.20, border_width=0.25, base_thickness_ratio=100.0, size=(8.0, 8.0)),
+                "perlin_noise": HfPerlinNoiseTerrainCfg(proportion=0.01, height_range=(0.0, 0.06), octaves=2, persistence=0.4, lacunarity=2.0, horizontal_scale=0.20, resolution=0.20, border_width=0.50, base_thickness_ratio=100.0, size=(8.0, 8.0)),
+                "rc_wall": RCWallTerrainCfg(proportion=0.15, wall_height_range=(0.0, 0.45), size=(8.0, 8.0)),
+                "sloped_terrain": HfPyramidSlopedTerrainCfg(proportion=0.01, slope_range=(0.052, 0.325), platform_width=2.0, border_width=0.25, base_thickness_ratio=100.0, horizontal_scale=0.20, size=(8.0, 8.0)),
             },
         ),
-        max_init_terrain_level=0,
+        max_init_terrain_level=5,
     )
 
-    # Disable default velocity stages command and bind strict velocity terrain curriculum
+    # Keep the custom terrain set, but align command/curriculum behavior with go2w rough.
     cfg.curriculum.pop("command_vel", None)
-    cfg.curriculum["terrain_levels"] = CurriculumTermCfg(func=terrain_levels_vel_strict, params={"command_name": "twist"})
+    cfg.curriculum["terrain_levels"] = CurriculumTermCfg(func=velocity_mdp.terrain_levels_vel, params={"command_name": "twist"})
 
     cfg.commands["twist"].heading_command = True
-    cfg.commands["twist"].rel_heading_envs = 0.5
-    cfg.commands["twist"].heading_control_stiffness = 0.6
+    cfg.commands["twist"].rel_heading_envs = 1.0
+    cfg.commands["twist"].heading_control_stiffness = 0.5
     cfg.commands["twist"].ranges.heading = (-math.pi, math.pi)
-    cfg.commands["twist"].rel_standing_envs = 0.2
+    cfg.commands["twist"].rel_standing_envs = 0.02
+    cfg.commands["twist"].ranges.lin_vel_x = (-1.0, 1.0)
+    cfg.commands["twist"].ranges.lin_vel_y = (-0.6, 0.6)
+    cfg.commands["twist"].ranges.ang_vel_z = (-1.0, 1.0)
 
     # ------------------
     # Startup & Reset Randomizations
     # ------------------
-    cfg.events["joint_friction"] = EventTermCfg(func=envs_dr.joint_friction, mode="startup", params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.7, 1.3), "operation": "scale"})
-    cfg.events["reset_joints"] = EventTermCfg(func=envs_mdp.reset_joints_by_offset, mode="reset", params={"position_range": (0.0, 0.1), "velocity_range": (0.0, 0.0), "asset_cfg": SceneEntityCfg("robot", joint_names=(".*",))})
+    cfg.events.pop("joint_friction", None)
+    cfg.events["reset_joints"] = EventTermCfg(func=envs_mdp.reset_joints_by_offset, mode="reset", params={"position_range": (0.0, 0.0), "velocity_range": (0.0, 0.0), "asset_cfg": SceneEntityCfg("robot", joint_names=(".*",))})
     
     cfg.events["reset_base"] = EventTermCfg(
         func=envs_mdp.reset_root_state_uniform, mode="reset",
@@ -426,42 +417,36 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # Rewards Integration
     # ------------------
     cfg.rewards["track_lin_vel"] = RewardTermCfg(
-        func=track_linear_velocity_l1,
-        weight=4.5,
+        func=track_linear_velocity,
+        weight=3.0,
         params={"std": 0.5, "command_name": "twist"}
     )
-    cfg.rewards["track_ang_vel"].weight = 2.0
-    cfg.rewards["track_ang_vel"].params["std"] = 0.5
+    cfg.rewards["track_ang_vel"] = RewardTermCfg(
+        func=track_angular_velocity,
+        weight=1.5,
+        params={"std": 0.5, "command_name": "twist"}
+    )
     
-    cfg.rewards["lin_vel_z"] = RewardTermCfg(func=lin_vel_z_l2, weight=-0.5)  # 🌟 增强垂直速度惩罚，抑制越障后的惯性暴冲
-    cfg.rewards["ang_vel_xy"] = RewardTermCfg(func=velocity_mdp.body_angular_velocity_penalty, weight=-0.3, params={"asset_cfg": SceneEntityCfg("robot", body_names=("base_link",))})  # 🌟 增强角速度惩罚，防止突发性翻转/后仰
+    cfg.rewards["lin_vel_z"] = RewardTermCfg(func=lin_vel_z_l2, weight=-2.0)
+    cfg.rewards["ang_vel_xy"] = RewardTermCfg(func=ang_vel_xy_l2, weight=-0.05, params={"asset_cfg": SceneEntityCfg("robot")})
 
     cfg.rewards.pop("upright", None)
-    cfg.rewards["roll_penalty"] = RewardTermCfg(
-        func=upright_roll_only,
-        weight=-1.0,
-        params={"asset_cfg": SceneEntityCfg("robot")}
-    )
+    cfg.rewards.pop("roll_penalty", None)
 
     # 🌟 限制俯仰角死区（Pitch Dead-zone）：允许正常爬坡时有最大 29 度（0.50 rad）的仰角，但严厉惩罚超过该仰角的“前轮悬空暴冲/后翻”
-    cfg.rewards["pitch_penalty"] = RewardTermCfg(
-        func=pitch_control_penalty,
-        weight=-1.5,
-        params={"max_pitch_rad": 0.50, "asset_cfg": SceneEntityCfg("robot")}
-    )
-    
     # 动态课程奖励与动作惩罚衰减
     cfg.rewards.pop("terrain_level_bonus", None)
-    cfg.rewards.pop("action_rate", None)
-    cfg.rewards["action_rate_curriculum"] = RewardTermCfg(func=action_rate_curriculum_l2, weight=-0.005)
+    cfg.rewards.pop("action_rate_curriculum", None)
+    cfg.rewards["action_rate"].weight = -0.01
 
-    cfg.rewards["joint_torques"].weight = -1e-4
+    cfg.rewards["joint_torques"].weight = -2.5e-5
+    cfg.rewards["joint_power"] = RewardTermCfg(func=joint_power, weight=-2.0e-5)
     cfg.rewards.pop("joint_acc", None)
     cfg.rewards["leg_joint_acc_l2"] = RewardTermCfg(func=envs_mdp.joint_acc_l2, weight=-2.5e-7, params={"asset_cfg": SceneEntityCfg("robot", joint_names=(".*_hip_abduction_joint", ".*_hip_pitch_joint", ".*_knee_joint"))})
     cfg.rewards["wheel_joint_acc_l2"] = RewardTermCfg(func=envs_mdp.joint_acc_l2, weight=-2.5e-9, params={"asset_cfg": SceneEntityCfg("robot", joint_names=(".*_wheel_joint",))})
 
 
-    cfg.rewards["joint_pos_limits"].weight = -0.2
+    cfg.rewards["joint_pos_limits"].weight = -5.0
     cfg.rewards.pop("leg_motion_penalty", None)
     cfg.rewards["is_terminated"].weight = 0.0
     cfg.rewards.pop("leg_symmetry", None)
@@ -487,7 +472,7 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.rewards.pop("joint_deviation_l2", None)
     cfg.rewards["joint_pos_penalty"] = RewardTermCfg(
         func=joint_pos_penalty, 
-        weight=-0.8, 
+        weight=-1.0,
         params={
             "stand_still_scale": 5.0,
             "velocity_threshold": 0.5,
@@ -502,37 +487,29 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         weight=0.1, 
         params={"command_name": "twist", "sensor_name": "feet_ground_contact"}
     )
+    cfg.rewards["feet_air_time"].weight = 0.0
+    cfg.rewards["upward"] = RewardTermCfg(func=upward, weight=1.0)
     
-    cfg.rewards["base_height_l2"].weight = -0.5
+    cfg.rewards["base_height_l2"].weight = 0.0
+    cfg.rewards["base_height_l2"].params["target_height"] = 0.40
     cfg.rewards["base_height_l2"].params["sensor_cfg"] = SceneEntityCfg("height_scanner")
 
     # 恢复机身碰撞惩罚为-1.0，逼迫机器人高抬腿跨越障碍，防止拖地
     cfg.rewards.pop("body_collision", None)
-    cfg.rewards["body_collision"] = RewardTermCfg(func=velocity_mdp.self_collision_cost, weight=-1.0, params={"sensor_name": "body_collision"})
+    cfg.rewards["undesired_contacts"] = RewardTermCfg(func=undesired_contacts, weight=-1.0, params={"sensor_name": "body_collision", "threshold": 1.0})
+    cfg.rewards["contact_forces"] = RewardTermCfg(func=contact_forces, weight=-1.5e-4, params={"sensor_name": "feet_ground_contact", "threshold": 100.0})
 
     # 🌟 严厉惩罚机身/胸部碰撞（防止硬撞高墙），逼迫机器人学会用前轮触墙并主动抬腿攀爬的“触觉反射”
-    cfg.rewards["base_collision"] = RewardTermCfg(
-        func=velocity_mdp.self_collision_cost, 
-        weight=-5.0, 
-        params={"sensor_name": "base_ground_contact"}
-    )
-
     # 彻底移除机身俯仰约束，允许机器人抬头爬高?    cfg.rewards.pop("flat_orientation", None)
 
-    cfg.rewards.pop("feet_air_time", None)
-
     # Remove non-applicable rewards
-    for key in ("wheel_roll_tracking", "wheel_contact_bonus", "body_ang_vel"):
+    for key in ("wheel_roll_tracking", "wheel_contact_bonus", "body_ang_vel", "terrain_level_bonus", "action_rate_curriculum"):
         cfg.rewards.pop(key, None)
 
-    cfg.episode_length_s = 30.0
-    cfg.sim = SimulationCfg(contact_sensor_maxmatch=128, mujoco=MujocoCfg(impratio=100, cone="elliptic", ccd_iterations=80))
+    cfg.episode_length_s = 20.0
+    cfg.sim = SimulationCfg(contact_sensor_maxmatch=128, mujoco=MujocoCfg(timestep=0.005, impratio=100, cone="elliptic", ccd_iterations=80))
 
     # 移除 orientation 终止，允许机器人翻倒以学习回复
-    cfg.terminations.pop("bad_orientation", None)
-    # 移除 base_ground_contact 终止，越障时机身会碰到障碍物
-    cfg.terminations.pop("base_ground_contact", None)
-
     cfg.seed = 42
     if cfg.scene.terrain is not None:
         cfg.scene.terrain.num_envs = 2048
@@ -663,7 +640,7 @@ def crawl_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         cfg.rewards.pop(key, None)
 
     cfg.episode_length_s = 30.0
-    cfg.sim = SimulationCfg(contact_sensor_maxmatch=128, mujoco=MujocoCfg(impratio=100, cone="elliptic", ccd_iterations=80))
+    cfg.sim = SimulationCfg(contact_sensor_maxmatch=128, mujoco=MujocoCfg(timestep=0.005, impratio=100, cone="elliptic", ccd_iterations=80))
 
     # Loosen orientation bad threshold to 80 degrees for steep crawling tilts
     cfg.terminations["bad_orientation"].params["limit_angle"] = math.radians(80.0)
