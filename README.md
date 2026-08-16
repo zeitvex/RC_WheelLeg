@@ -17,7 +17,7 @@
 
 ## 版本状态
 
-* 阶段：16DOF 初期实验与第一代 Sim2Real 验证版本
+* 阶段：16DOF 实验与新一代 Sim2Real 验证版本
 * 平台：Jetson Orin Nano 8G
 * 构型：4 条轮腿，每条腿 3 个腿部关节和 1 个驱动轮
 * 执行器：共 16 个执行器（RS02）
@@ -39,11 +39,11 @@
 
 * SolidWorks 2026 版本机械源文件，整机入口为 `02_mechanical/CAD/solidworks/WEEKDOG.SLDASM`。
 * 整机、身体、关节、腿部和轮组 STEP 文件，整机入口为 `02_mechanical/STEP/WEEKDOG.STEP`。
-* 第一代 `mjlab` 训练任务和本地依赖，位于 `05_software/train/rc_mjlab/`。
+* 新一代 `mjlab` 训练任务和本地依赖，位于 `05_software/train/rc_mjlab/`。
 * 16DOF 轮足 MuJoCo/MJCF 模型、网格、Sim2Sim 验证工具和早期策略权重。
 * IK 轨迹与早期真机控制探索，位于 `05_software/real/ik_real/`。
-* 第一代 Python Sim2Real 部署栈，包含策略运行时、电机映射、IMU 接入、站立初始化、安全检查、Web 调试和标定工具。
-* 第一代 Sim2Real 真机验证视频与预览图。
+* 新一代 Python Sim2Real 部署栈，包含策略运行时、电机映射、IMU 接入、站立初始化、安全检查、Web 调试和标定工具。
+* 新一代 Sim2Real 真机验证视频与预览图。
 
 ### 后续整理内容
 
@@ -79,7 +79,7 @@
 <a href="06_assets/videos/early_sim2real.mp4">
   <img
     src="06_assets/images/early_sim2real_preview.jpg"
-    alt="第一代 Sim2Real 真机验证"
+    alt="新一代 Sim2Real 真机验证"
     width="20%"
   >
 </a>
