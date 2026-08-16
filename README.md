@@ -74,7 +74,7 @@
 
 ## 实机展示
 
-当前仓库包含第一代 Sim2Real 真机测试记录，视频与预览图位于 `06_assets/`：
+当前仓库包含新一代 Sim2Real 真机测试记录，视频与预览图位于 `06_assets/`：
 
 <a href="06_assets/videos/early_sim2real.mp4">
   <img
@@ -84,7 +84,7 @@
   >
 </a>
 
-该视频对应当前第一代 Python Sim2Real 与真机部署实现，时长约 41 秒。点击预览图可播放或下载原视频。
+该视频对应当前新一代 Python Sim2Real 与真机部署实现，时长约 41 秒。点击预览图可播放或下载原视频。
 
 
 
@@ -125,7 +125,7 @@ RC_WheelLeg/
 
 ## 软件闭环
 
-当前 `05_software/` 保存第一代完整软件闭环：
+当前 `05_software/` 保存完整软件闭环：
 
 ```text
 MJCF + mjlab task
