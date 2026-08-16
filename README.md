@@ -1,4 +1,4 @@
-﻿# RC\_WheelLeg
+﻿# RC_WheelLeg
 
 山东华宇工学院 HYNova 战队轮足机器人项目的开源仓库。
 
@@ -73,7 +73,7 @@
 
 ## 实机展示
 
-当前仓库包含第一代 Sim2Real 真机测试记录，视频与预览图位于 `06\_assets/`：
+当前仓库包含第一代 Sim2Real 真机测试记录，视频与预览图位于 `06_assets/`：
 
 <a href="06_assets/videos/early_sim2real.mp4">
   <img
@@ -90,13 +90,13 @@
 ## 目录结构
 
 ```text
-RC\_WheelLeg/
-├─ 01\_doc/          # 项目技术文档和使用说明
-├─ 02\_mechanical/   # SolidWorks CAD、STEP 和机械源资料
-├─ 03\_hardware/     # 自研电路、接线、BOM、传感器与计算平台说明
-├─ 04\_firmware/     # MCU 或其他嵌入式控制器固件
-├─ 05\_software/     # 强化学习训练、MuJoCo、Sim2Sim、Sim2Real 和工具
-├─ 06\_assets/       # 图片、视频和测试结果
+RC_WheelLeg/
+├─ 01_doc/          # 项目技术文档和使用说明
+├─ 02_mechanical/   # SolidWorks CAD、STEP 和机械源资料
+├─ 03_hardware/     # 自研电路、接线、BOM、传感器与计算平台说明
+├─ 04_firmware/     # MCU 或其他嵌入式控制器固件
+├─ 05_software/     # 强化学习训练、MuJoCo、Sim2Sim、Sim2Real 和工具
+├─ 06_assets/       # 图片、视频和测试结果
 ├─ .gitignore
 └─ README.md
 ```
@@ -105,26 +105,26 @@ RC\_WheelLeg/
 
 机械资料：
 
-* [`02\_mechanical/README.md`](02_mechanical/README.md)
-* `02\_mechanical/CAD/solidworks/WEEKDOG.SLDASM`
-* `02\_mechanical/STEP/WEEKDOG.STEP`
+* [`02_mechanical/README.md`](02_mechanical/README.md)
+* [`02_mechanical/CAD/solidworks/WEEKDOG.SLDASM`](02_mechanical/CAD/solidworks/WEEKDOG.SLDASM)
+* [`02_mechanical/STEP/WEEKDOG.STEP`](02_mechanical/STEP/WEEKDOG.STEP)
 
 软件资料：
 
-* [`05\_software/README.md`](05_software/README.md)
-* [`05\_software/train/README.md`](05_software/train/README.md)
-* [`05\_software/train/rc\_mjlab/README.md`](05_software/train/rc_mjlab/README.md)
-* [`05\_software/real/README.md`](05_software/real/README.md)
-* [`05\_software/real/sim2real/README.md`](05_software/real/sim2real/README.md)
+* [`05_software/README.md`](05_software/README.md)
+* [`05_software/train/README.md`](05_software/train/README.md)
+* [`05_software/train/rc_mjlab/README.md`](05_software/train/rc_mjlab/README.md)
+* [`05_software/real/README.md`](05_software/real/README.md)
+* [`05_software/real/sim2real/README.md`](05_software/real/sim2real/README.md)
 
 媒体资料：
 
-* [`06\_assets/README.md`](06_assets/README.md)
-* `06\_assets/videos/early\_sim2real.mp4`
+* [`06_assets/README.md`](06_assets/README.md)
+* [`06_assets/videos/early_sim2real.mp4`](06_assets/videos/early_sim2real.mp4)
 
 ## 软件闭环
 
-当前 `05\_software/` 保存第一代完整软件闭环：
+当前 `05_software/` 保存第一代完整软件闭环：
 
 ```text
 MJCF + mjlab task
@@ -141,9 +141,9 @@ MJCF + mjlab task
 IK real --------------------------------> 电机
 ```
 
-其中 `rc\_mjlab` 是自包含训练与仿真工程，包含 `src/robot` 训练任务、`mjcf` 模型、`mujoco\_sim` 独立调试工具、`sim2sim` 验证工具、本地 `mjlab` 依赖和早期策略权重。
+其中 `rc_mjlab` 是自包含训练与仿真工程，包含 `src/robot` 训练任务、`mjcf` 模型、`mujoco_sim` 独立调试工具、`sim2sim` 验证工具、本地 `mjlab` 依赖和早期策略权重。
 
-`sim2real` 当前部署 `53D -> 16D` 策略模型，控制频率为 50Hz，包含站立初始化、站立平衡、运行时安全检查、零命令保持和首次命令平滑释放逻辑。部署前应先阅读 `05\_software/real/sim2real/README.md`、`DEPLOYMENT.md` 和 `ORIN\_NANO\_DEPLOYMENT.md`。
+`sim2real` 当前部署 `53D -> 16D` 策略模型，控制频率为 50Hz，包含站立初始化、站立平衡、运行时安全检查、零命令保持和首次命令平滑释放逻辑。部署前应先阅读 `05_software/real/sim2real/README.md`、`DEPLOYMENT.md` 和 `ORIN_NANO_DEPLOYMENT.md`。
 
 
 
