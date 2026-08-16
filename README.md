@@ -22,7 +22,7 @@
 * 构型：4 条轮腿，每条腿 3 个腿部关节和 1 个驱动轮
 * 执行器：共 16 个执行器（RS02）
 * 控制路线：强化学习训练、MuJoCo 仿真、Sim2Sim 验证、Python Sim2Real 真机部署
-* 当前状态：**第二代软件闭环**已更新、MJCF 相关参数已订正，mjlab 训练框架已完成首轮整理；
+* 当前状态：**第二代软件相关**已更新、MJCF 相关参数订正，mjlab 训练框架已完成首轮整理；
 * 硬件、固件、BOM、装配和比赛最终版本仍在持续补充
 
 ## 开源内容
@@ -123,9 +123,9 @@ RC_WheelLeg/
 * [`06_assets/README.md`](06_assets/README.md)
 * [`06_assets/videos/early_sim2real.mp4`](06_assets/videos/early_sim2real.mp4)
 
-## 软件闭环
+## 软件相关
 
-当前 `05_software/` 保存完整软件闭环：
+当前 `05_software/` 保存完整软件相关：
 
 ```text
 MJCF + mjlab task
