@@ -1,4 +1,4 @@
-﻿# RC_WheelLeg
+# RC_WheelLeg
 
 山东华宇工学院 HYNova 战队轮足机器人项目的开源仓库。
 
@@ -58,7 +58,7 @@
 * 轮足开源交流群：[点击加入 QQ 群](https://qm.qq.com/q/HkdRYwtAYg)
 * 群号：`767195310`
 
-<img src="06_assets/images/qq.jpg" alt="轮足开源交流群二维码" width="20%">
+[![轮足开源交流群二维码](06_assets/images/qq.jpg)](06_assets/images/qq.jpg)
 
 同时欢迎在群内交流机械设计、硬件搭建、下位机控制、仿真训练、强化学习和真机部署相关问题，也欢迎对本项目提出建议。
 
@@ -76,13 +76,7 @@
 
 当前仓库包含新一代 Sim2Real 真机测试记录，视频与预览图位于 `06_assets/`：
 
-<a href="06_assets/videos/early_sim2real.mp4">
-  <img
-    src="06_assets/images/early_sim2real_preview.jpg"
-    alt="新一代 Sim2Real 真机验证"
-    width="20%"
-  >
-</a>
+[![新一代 Sim2Real 真机验证](06_assets/images/early_sim2real_preview.jpg)](06_assets/videos/early_sim2real.mp4)
 
 该视频对应当前新一代 Python Sim2Real 与真机部署实现，时长约 41 秒。点击预览图可播放或下载原视频。
 
