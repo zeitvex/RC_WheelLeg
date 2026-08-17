@@ -153,7 +153,7 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
         "projected_gravity": ObservationTermCfg(
             func=velocity_mdp.projected_gravity,
-            noise=Unoise(n_min=-0.05, n_max=0.05),
+            noise=Unoise(n_min=-0.08, n_max=0.08),
         ),
         "command": ObservationTermCfg(
             func=velocity_mdp.generated_commands,
@@ -212,13 +212,13 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
             actuator_names=(".*_hip_abduction_joint", ".*_hip_pitch_joint", ".*_knee_joint"),
             scale={".*_hip_abduction_joint": 0.125, "^(?!.*_hip_abduction_joint).*": 0.25}, use_default_offset=True,
             control_frequency=50.0, cut_off_frequency=5.0,
-            min_delay=0, max_delay=2,
+            min_delay=0, max_delay=4,
         ),
         "wheel_joint_vel": JointVelocityDelayedLowPassActionCfg(
             entity_name="robot", actuator_names=(".*_wheel_joint",),
             scale=5.0, offset=0.0, use_default_offset=False,
             control_frequency=50.0, cut_off_frequency=15.0,
-            min_delay=0, max_delay=2,
+            min_delay=0, max_delay=4,
         ),
     }
 
@@ -262,20 +262,20 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
         "base_com": EventTermCfg(
             func=envs_dr.body_com_offset, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
+            params={"asset_cfg": SceneEntityCfg("robot", body_names=(".*",)),
                     "operation": "add", "ranges": {0: (-0.05, 0.05), 1: (-0.05, 0.05), 2: (-0.05, 0.05)}},
         ),
         "body_friction": EventTermCfg(
             func=envs_dr.geom_friction, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", geom_names=(".*",)), "operation": "abs", "ranges": (0.3, 1.0)},
+            params={"asset_cfg": SceneEntityCfg("robot", geom_names=(".*",)), "operation": "abs", "ranges": (0.15, 1.25)},
         ),
         "actuator_stiffness": EventTermCfg(
             func=envs_dr.joint_stiffness, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.9, 1.1), "operation": "scale", "distribution": "log_uniform"},
+            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.5, 1.5), "operation": "scale", "distribution": "log_uniform"},
         ),
         "actuator_damping": EventTermCfg(
             func=envs_dr.joint_damping, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.9, 1.1), "operation": "scale", "distribution": "log_uniform"},
+            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.5, 1.5), "operation": "scale", "distribution": "log_uniform"},
         ),
         "body_mass_base": EventTermCfg(
             func=envs_dr.body_mass, mode="startup",
@@ -283,6 +283,24 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
                 "asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
                 "operation": "add",
                 "ranges": (-1.0, 3.0),
+            },
+        ),
+        "body_mass_limbs": EventTermCfg(
+            func=envs_dr.body_mass, mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names=(".*_knee_.*", ".*_wheel_.*")),
+                "operation": "scale",
+                "ranges": (0.7, 1.3),
+            },
+        ),
+        "apply_continuous_disturbance": EventTermCfg(
+            func=apply_continuous_disturbance, mode="step",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
+                "force_range": (-10.0, 10.0),
+                "torque_range": (-10.0, 10.0),
+                "resample_time_range": (5.0, 10.0),
+                "time_constant": 1.0,
             },
         ),
     }
