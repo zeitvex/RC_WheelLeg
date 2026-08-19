@@ -24,9 +24,9 @@ _COLOR_PURPLE = (0.60, 0.20, 0.80)
 
 @dataclass(kw_only=True)
 class RCWallTerrainCfg(SubTerrainCfg):
-    """Triple transverse wall obstacle terrain representing repeated race high walls.
+    """Repeated transverse wall obstacle terrain for high-wall gait training.
 
-    The robot must sprint from the flat platform, vault over three walls, and proceed.
+    The robot must repeatedly step/vault over transverse walls and proceed.
     As difficulty scales from 0 to 1, the wall height increases linearly from
     wall_height_range[0] to wall_height_range[1].
     
@@ -41,9 +41,9 @@ class RCWallTerrainCfg(SubTerrainCfg):
     wall_length_frac: float = 0.8
     """Wall length fraction of the terrain width (leaving gaps for visualization/debugging)."""
     platform_width: float = 1.5
-    """Sprint platform width (m)."""
-    wall_centers_x: tuple[float, float, float] = (2.9, 4.45, 6.0)
-    """Wall center positions along x, spaced to keep a short sprint, two recovery gaps, and exit room."""
+    """Nominal start platform width (m)."""
+    wall_centers_x: tuple[float, ...] = (2.1, 3.2, 4.3, 5.4, 6.5)
+    """Wall center positions along x."""
 
     def function(
         self,
@@ -69,7 +69,7 @@ class RCWallTerrainCfg(SubTerrainCfg):
             origin = np.array([self.size[0] / 2, self.size[1] / 2, 0.0])
             return TerrainOutput(origin=origin, geometries=geometries)
 
-        # -- Wall geometry: three transverse walls oriented along y-axis --
+        # -- Wall geometry: transverse walls oriented along y-axis --
         wall_length = self.wall_length_frac * self.size[1]
         cy = self.size[1] / 2
 
@@ -87,8 +87,7 @@ class RCWallTerrainCfg(SubTerrainCfg):
             )
             geometries.append(TerrainGeometry(geom=wall_geom, color=wall_color))
 
-        # Spawn origin is set to the left platform area to allow a short sprint
-        # before the first wall and limited recovery space between subsequent walls.
+        # Spawn origin is set to the left platform area.
         origin = np.array([1.5, cy, 0.0])
         return TerrainOutput(origin=origin, geometries=geometries)
 

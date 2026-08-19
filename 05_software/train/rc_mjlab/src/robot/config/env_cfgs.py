@@ -52,7 +52,11 @@ from ..mdp.only_positive_rewards import enable_only_positive_rewards
 from ..mdp.rewards import (
     track_linear_velocity,
     track_linear_velocity_l1,
+    track_linear_velocity_x,
+    track_linear_velocity_y,
     track_angular_velocity,
+    track_angular_velocity_z,
+    stair_lateral_yaw_drift_l2,
     base_height_l2,
     safe_base_lin_vel,
     safe_foot_contact,
@@ -79,8 +83,34 @@ from ..mdp.rewards import (
     ang_vel_xy_l2,
     undesired_contacts,
     contact_forces,
+    tracking_lin_vel_error,
+    tracking_yaw_vel_error,
+    tracking_lin_vel_x_error,
+    tracking_lin_vel_y_error,
+    tracking_lin_vel_along_command_error,
+    actual_lin_vel_orthogonal_command_mean,
+    command_lin_vel_mean,
+    command_yaw_vel_abs_mean,
+    actual_lin_vel_mean,
+    tracking_lin_vel_error_band_mean,
+    tracking_lin_vel_axis_error_band_mean,
+    command_band_active,
+    wheel_raw_action_abs_mean,
+    wheel_target_vel_abs_mean,
+    wheel_actual_vel_abs_mean,
+    wheel_target_actual_vel_error_mean,
+    wheel_actual_to_target_vel_ratio_mean,
+    wheel_target_actual_sign_agreement,
+    upright_metric,
+    base_ground_contact_metric,
 )
-from ..mdp.curriculums import terrain_levels_vel_strict
+from ..mdp.curriculums import (
+    command_axis_levels_vel,
+    command_levels_adaptive,
+    terrain_levels_obstacle_release,
+    terrain_levels_ramp_strict,
+    terrain_levels_vel_strict,
+)
 from ..mdp.commands import UniformThresholdVelocityCommandCfg
 
 # Constant Definitions
@@ -153,7 +183,7 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
         "projected_gravity": ObservationTermCfg(
             func=velocity_mdp.projected_gravity,
-            noise=Unoise(n_min=-0.08, n_max=0.08),
+            noise=Unoise(n_min=-0.05, n_max=0.05),
         ),
         "command": ObservationTermCfg(
             func=velocity_mdp.generated_commands,
@@ -212,13 +242,13 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
             actuator_names=(".*_hip_abduction_joint", ".*_hip_pitch_joint", ".*_knee_joint"),
             scale={".*_hip_abduction_joint": 0.125, "^(?!.*_hip_abduction_joint).*": 0.25}, use_default_offset=True,
             control_frequency=50.0, cut_off_frequency=5.0,
-            min_delay=0, max_delay=4,
+            min_delay=0, max_delay=2,
         ),
         "wheel_joint_vel": JointVelocityDelayedLowPassActionCfg(
             entity_name="robot", actuator_names=(".*_wheel_joint",),
             scale=5.0, offset=0.0, use_default_offset=False,
             control_frequency=50.0, cut_off_frequency=15.0,
-            min_delay=0, max_delay=4,
+            min_delay=0, max_delay=2,
         ),
     }
 
@@ -262,20 +292,20 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
         "base_com": EventTermCfg(
             func=envs_dr.body_com_offset, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", body_names=(".*",)),
+            params={"asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
                     "operation": "add", "ranges": {0: (-0.05, 0.05), 1: (-0.05, 0.05), 2: (-0.05, 0.05)}},
         ),
         "body_friction": EventTermCfg(
             func=envs_dr.geom_friction, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot", geom_names=(".*",)), "operation": "abs", "ranges": (0.15, 1.25)},
+            params={"asset_cfg": SceneEntityCfg("robot", geom_names=(".*",)), "operation": "abs", "ranges": (0.3, 1.0)},
         ),
         "actuator_stiffness": EventTermCfg(
             func=envs_dr.joint_stiffness, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.5, 1.5), "operation": "scale", "distribution": "log_uniform"},
+            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.9, 1.1), "operation": "scale", "distribution": "log_uniform"},
         ),
         "actuator_damping": EventTermCfg(
             func=envs_dr.joint_damping, mode="startup",
-            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.5, 1.5), "operation": "scale", "distribution": "log_uniform"},
+            params={"asset_cfg": SceneEntityCfg("robot"), "ranges": (0.9, 1.1), "operation": "scale", "distribution": "log_uniform"},
         ),
         "body_mass_base": EventTermCfg(
             func=envs_dr.body_mass, mode="startup",
@@ -283,24 +313,6 @@ def _make_base_env_cfg() -> ManagerBasedRlEnvCfg:
                 "asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
                 "operation": "add",
                 "ranges": (-1.0, 3.0),
-            },
-        ),
-        "body_mass_limbs": EventTermCfg(
-            func=envs_dr.body_mass, mode="startup",
-            params={
-                "asset_cfg": SceneEntityCfg("robot", body_names=(".*_knee_.*", ".*_wheel_.*")),
-                "operation": "scale",
-                "ranges": (0.7, 1.3),
-            },
-        ),
-        "apply_continuous_disturbance": EventTermCfg(
-            func=apply_continuous_disturbance, mode="step",
-            params={
-                "asset_cfg": SceneEntityCfg("robot", body_names=("base_link",)),
-                "force_range": (-10.0, 10.0),
-                "torque_range": (-10.0, 10.0),
-                "resample_time_range": (5.0, 10.0),
-                "time_constant": 1.0,
             },
         ),
     }
@@ -385,13 +397,18 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         terrain_generator=TerrainGeneratorCfg(
             size=(8.0, 8.0), border_width=20.0, num_rows=10, num_cols=20, curriculum=True,
             sub_terrains={
-                "flat": BoxFlatTerrainCfg(proportion=0.05, size=(8.0, 8.0)),
-                "pyramid_stairs": BoxPyramidStairsTerrainCfg(proportion=0.05, step_height_range=(0.0, 0.3), step_width=0.30, size=(8.0, 8.0)),
-                "pyramid_stairs_inv": BoxInvertedPyramidStairsTerrainCfg(proportion=0.45, step_height_range=(0.0, 0.3), step_width=0.30, size=(8.0, 8.0)),
-                "random_grid": BoxRandomGridTerrainCfg(proportion=0.27, grid_width=0.45, grid_height_range=(0.0, 0.3), size=(8.0, 8.0)),
+                "flat": BoxFlatTerrainCfg(proportion=0.15, size=(8.0, 8.0)),
+                "pyramid_stairs": BoxPyramidStairsTerrainCfg(proportion=0.05, step_height_range=(0.0, 0.20), step_width=0.30, size=(8.0, 8.0)),
+                "pyramid_stairs_inv": BoxInvertedPyramidStairsTerrainCfg(proportion=0.35, step_height_range=(0.0, 0.20), step_width=0.30, size=(8.0, 8.0)),
+                "random_grid": BoxRandomGridTerrainCfg(proportion=0.27, grid_width=0.45, grid_height_range=(0.0, 0.20), size=(8.0, 8.0)),
                 "random_rough": HfRandomUniformTerrainCfg(proportion=0.01, noise_range=(0.0, 0.06), noise_step=0.01, horizontal_scale=0.20, downsampled_scale=0.20, border_width=0.25, base_thickness_ratio=100.0, size=(8.0, 8.0)),
                 "perlin_noise": HfPerlinNoiseTerrainCfg(proportion=0.01, height_range=(0.0, 0.06), octaves=2, persistence=0.4, lacunarity=2.0, horizontal_scale=0.20, resolution=0.20, border_width=0.50, base_thickness_ratio=100.0, size=(8.0, 8.0)),
-                "rc_wall": RCWallTerrainCfg(proportion=0.15, wall_height_range=(0.0, 0.45), size=(8.0, 8.0)),
+                "rc_wall": RCWallTerrainCfg(
+                    proportion=0.15,
+                    wall_height_range=(0.10, 0.35),
+                    wall_centers_x=(2.1, 3.2, 4.3, 5.4, 6.5),
+                    size=(8.0, 8.0),
+                ),
                 "sloped_terrain": HfPyramidSlopedTerrainCfg(proportion=0.01, slope_range=(0.052, 0.325), platform_width=2.0, border_width=0.25, base_thickness_ratio=100.0, horizontal_scale=0.20, size=(8.0, 8.0)),
             },
         ),
@@ -400,15 +417,65 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
     # Keep the custom terrain set, but align command/curriculum behavior with go2w rough.
     cfg.curriculum.pop("command_vel", None)
-    cfg.curriculum["terrain_levels"] = CurriculumTermCfg(func=velocity_mdp.terrain_levels_vel, params={"command_name": "twist"})
+    cfg.curriculum["terrain_levels"] = CurriculumTermCfg(
+        func=terrain_levels_obstacle_release,
+        params={
+            "command_name": "twist",
+            "initial_terrain_names": ("flat", "random_rough", "perlin_noise", "sloped_terrain", "pyramid_stairs"),
+            "release_schedule": (
+                (200 * 24, ("random_grid",)),
+                (500 * 24, ("pyramid_stairs_inv",)),
+                (700 * 24, ("rc_wall",)),
+            ),
+        },
+    )
+    cfg.curriculum["command_x_levels"] = CurriculumTermCfg(
+        func=command_levels_adaptive,
+        params={
+            "command_name": "twist",
+            "reward_term_name": "track_lin_vel_x_exp",
+            "axis": "x",
+            "initial_range": (-0.5, 0.5),
+            "delta_command": 0.05,
+            "target_ratio": 0.8,
+            "ema_alpha": 0.5,
+        },
+    )
+    cfg.curriculum["command_y_levels"] = CurriculumTermCfg(
+        func=command_levels_adaptive,
+        params={
+            "command_name": "twist",
+            "reward_term_name": "track_lin_vel_y_exp",
+            "axis": "y",
+            "initial_range": (-0.5, 0.5),
+            "delta_command": 0.05,
+            "target_ratio": 0.8,
+            "ema_alpha": 0.5,
+        },
+    )
+    cfg.curriculum["command_yaw_levels"] = CurriculumTermCfg(
+        func=command_levels_adaptive,
+        params={
+            "command_name": "twist",
+            "reward_term_name": "track_ang_vel_z_exp",
+            "axis": "yaw",
+            "initial_range": (-0.5, 0.5),
+            "delta_command": 0.05,
+            "target_ratio": 0.8,
+            "ema_alpha": 0.5,
+        },
+    )
 
     cfg.commands["twist"].heading_command = True
     cfg.commands["twist"].rel_heading_envs = 1.0
     cfg.commands["twist"].heading_control_stiffness = 0.5
     cfg.commands["twist"].ranges.heading = (-math.pi, math.pi)
     cfg.commands["twist"].rel_standing_envs = 0.02
+    cfg.commands["twist"].rel_forward_envs = 0.30
+    cfg.commands["twist"].rel_lateral_envs = 0.20
+    cfg.commands["twist"].rel_yaw_envs = 0.20
     cfg.commands["twist"].ranges.lin_vel_x = (-1.0, 1.0)
-    cfg.commands["twist"].ranges.lin_vel_y = (-0.6, 0.6)
+    cfg.commands["twist"].ranges.lin_vel_y = (-1.0, 1.0)
     cfg.commands["twist"].ranges.ang_vel_z = (-1.0, 1.0)
 
     # ------------------
@@ -420,7 +487,7 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     cfg.events["reset_base"] = EventTermCfg(
         func=envs_mdp.reset_root_state_uniform, mode="reset",
         params={
-            "pose_range": {"z": (0.40, 0.45), "yaw": (-math.pi, math.pi)},
+            "pose_range": {"z": (0.42, 0.42), "yaw": (-math.pi, math.pi)},
             "velocity_range": {"x": (-0.2, 0.2), "y": (-0.1, 0.1), "yaw": (-0.2, 0.2)},
             "asset_cfg": SceneEntityCfg("robot"),
         },
@@ -434,15 +501,32 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # ------------------
     # Rewards Integration
     # ------------------
-    cfg.rewards["track_lin_vel"] = RewardTermCfg(
-        func=track_linear_velocity,
-        weight=3.0,
-        params={"std": 0.5, "command_name": "twist"}
+    cfg.rewards.pop("track_lin_vel", None)
+    cfg.rewards.pop("track_ang_vel", None)
+    cfg.rewards["track_lin_vel_x_exp"] = RewardTermCfg(
+        func=track_linear_velocity_x,
+        weight=1.0,
+        params={"std": 0.25, "command_name": "twist"},
     )
-    cfg.rewards["track_ang_vel"] = RewardTermCfg(
-        func=track_angular_velocity,
-        weight=1.5,
-        params={"std": 0.5, "command_name": "twist"}
+    cfg.rewards["track_lin_vel_y_exp"] = RewardTermCfg(
+        func=track_linear_velocity_y,
+        weight=1.0,
+        params={"std": 0.25, "command_name": "twist"},
+    )
+    cfg.rewards["track_ang_vel_z_exp"] = RewardTermCfg(
+        func=track_angular_velocity_z,
+        weight=1.0,
+        params={"std": 0.25, "command_name": "twist"},
+    )
+    cfg.rewards["stair_lateral_yaw_drift"] = RewardTermCfg(
+        func=stair_lateral_yaw_drift_l2,
+        weight=-1.0,
+        params={
+            "terrain_names": ("pyramid_stairs", "pyramid_stairs_inv", "random_grid"),
+            "y_scale": 1.0,
+            "yaw_scale": 1.0,
+            "asset_cfg": SceneEntityCfg("robot"),
+        },
     )
     
     cfg.rewards["lin_vel_z"] = RewardTermCfg(func=lin_vel_z_l2, weight=-2.0)
@@ -473,8 +557,8 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         weight=-0.05, 
         params={
             "mirror_joints": [
-                ["fl_(hip_abduction|hip_pitch|knee)_joint", "rr_(hip_abduction|hip_pitch|knee)_joint"],
-                ["fr_(hip_abduction|hip_pitch|knee)_joint", "rl_(hip_abduction|hip_pitch|knee)_joint"]
+                ["fl_(hip_pitch|knee)_joint", "rr_(hip_pitch|knee)_joint"],
+                ["fr_(hip_pitch|knee)_joint", "rl_(hip_pitch|knee)_joint"]
             ], 
             "asset_cfg": SceneEntityCfg("robot")
         }
@@ -483,33 +567,61 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     # 移除 variable_posture 及其产生的静止奖励陷阱，换用极轻微的偏离惩罚
     cfg.rewards.pop("stand_still", None)
     cfg.rewards["stand_still"] = RewardTermCfg(func=stand_still, weight=-2.0, params={"command_name": "twist", "command_threshold": 0.1})
-    
+
     cfg.rewards.pop("hip_deviation", None)
     cfg.rewards.pop("variable_posture", None)
-    
+
     cfg.rewards.pop("joint_deviation_l2", None)
-    cfg.rewards["joint_pos_penalty"] = RewardTermCfg(
-        func=joint_pos_penalty, 
+
+    # 针对 ab 关节施加较严厉的惩罚，防止在 yaw 时乱撇腿
+    cfg.rewards["joint_pos_penalty_ab"] = RewardTermCfg(
+        func=joint_pos_penalty,
         weight=-1.0,
         params={
             "stand_still_scale": 5.0,
             "velocity_threshold": 0.5,
             "command_threshold": 0.1,
-            "asset_cfg": SceneEntityCfg("robot", joint_names=(".*_hip_abduction_joint", ".*_hip_pitch_joint", ".*_knee_joint")),
+            "asset_cfg": SceneEntityCfg("robot", joint_names=(".*_hip_abduction_joint",)),
             "command_name": "twist"
         }
     )
-    
+
+    # 针对 pitch 和 knee 关节施加较宽松的惩罚，保留跨越障碍的抬腿自由度
+    cfg.rewards["joint_pos_penalty_sagittal"] = RewardTermCfg(
+        func=joint_pos_penalty,
+        weight=-0.3,
+        params={
+            "stand_still_scale": 5.0,
+            "velocity_threshold": 0.5,
+            "command_threshold": 0.1,
+            "asset_cfg": SceneEntityCfg("robot", joint_names=(".*_hip_pitch_joint", ".*_knee_joint")),
+            "command_name": "twist"
+        }
+    )
+
+    # 🌟 强力约束同侧外展关节平行对称，消除转向时的前后剪刀式摆动
+    cfg.rewards["abduction_mirror"] = RewardTermCfg(
+        func=joint_mirror,
+        weight=-0.5,  # 施加合理惩罚，限制前后腿同侧外展关节反向运动
+        params={
+            "mirror_joints": [
+                ["fl_hip_abduction_joint", "rl_hip_abduction_joint"],
+                ["fr_hip_abduction_joint", "rr_hip_abduction_joint"]
+            ],
+            "asset_cfg": SceneEntityCfg("robot")
+        }
+    )
+
     cfg.rewards["feet_contact_without_cmd"] = RewardTermCfg(
-        func=feet_contact_without_cmd, 
-        weight=0.1, 
+        func=feet_contact_without_cmd,
+        weight=0.1,
         params={"command_name": "twist", "sensor_name": "feet_ground_contact"}
     )
-    cfg.rewards["feet_air_time"].weight = 0.0
-    cfg.rewards["upward"] = RewardTermCfg(func=upward, weight=1.0)
+    cfg.rewards["feet_air_time"].weight = 0.15
+    cfg.rewards["upward"] = RewardTermCfg(func=upward, weight=0.5)
     
     cfg.rewards["base_height_l2"].weight = 0.0
-    cfg.rewards["base_height_l2"].params["target_height"] = 0.40
+    cfg.rewards["base_height_l2"].params["target_height"] = 0.42
     cfg.rewards["base_height_l2"].params["sensor_cfg"] = SceneEntityCfg("height_scanner")
 
     # 恢复机身碰撞惩罚为-1.0，逼迫机器人高抬腿跨越障碍，防止拖地
@@ -532,6 +644,79 @@ def rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     if cfg.scene.terrain is not None:
         cfg.scene.terrain.num_envs = 2048
         cfg.scene.terrain.env_spacing = 2.5
+
+    cfg.metrics.update(
+        {
+            "tracking_lin_vel_error": MetricsTermCfg(func=tracking_lin_vel_error, params={"command_name": "twist"}),
+            "tracking_lin_vel_x_error": MetricsTermCfg(func=tracking_lin_vel_x_error, params={"command_name": "twist"}),
+            "tracking_lin_vel_y_error": MetricsTermCfg(func=tracking_lin_vel_y_error, params={"command_name": "twist"}),
+            "tracking_lin_vel_along_cmd_error": MetricsTermCfg(
+                func=tracking_lin_vel_along_command_error, params={"command_name": "twist"}
+            ),
+            "actual_lin_vel_orthogonal_cmd": MetricsTermCfg(
+                func=actual_lin_vel_orthogonal_command_mean, params={"command_name": "twist"}
+            ),
+            "tracking_yaw_vel_error": MetricsTermCfg(func=tracking_yaw_vel_error, params={"command_name": "twist"}),
+            "cmd_lin_vel": MetricsTermCfg(func=command_lin_vel_mean, params={"command_name": "twist"}),
+            "cmd_yaw_vel": MetricsTermCfg(func=command_yaw_vel_abs_mean, params={"command_name": "twist"}),
+            "actual_lin_vel": MetricsTermCfg(func=actual_lin_vel_mean),
+            "tracking_lin_vel_error_cmd_0_03": MetricsTermCfg(
+                func=tracking_lin_vel_error_band_mean,
+                params={"command_name": "twist", "min_speed": 0.0, "max_speed": 0.3},
+            ),
+            "tracking_lin_vel_error_cmd_03_07": MetricsTermCfg(
+                func=tracking_lin_vel_error_band_mean,
+                params={"command_name": "twist", "min_speed": 0.3, "max_speed": 0.7},
+            ),
+            "tracking_lin_vel_error_cmd_07_up": MetricsTermCfg(
+                func=tracking_lin_vel_error_band_mean,
+                params={"command_name": "twist", "min_speed": 0.7, "max_speed": 10.0},
+            ),
+            "tracking_lin_vel_x_error_cmd_0_03": MetricsTermCfg(
+                func=tracking_lin_vel_axis_error_band_mean,
+                params={"axis": 0, "command_name": "twist", "min_speed": 0.0, "max_speed": 0.3},
+            ),
+            "tracking_lin_vel_x_error_cmd_03_07": MetricsTermCfg(
+                func=tracking_lin_vel_axis_error_band_mean,
+                params={"axis": 0, "command_name": "twist", "min_speed": 0.3, "max_speed": 0.7},
+            ),
+            "tracking_lin_vel_x_error_cmd_07_up": MetricsTermCfg(
+                func=tracking_lin_vel_axis_error_band_mean,
+                params={"axis": 0, "command_name": "twist", "min_speed": 0.7, "max_speed": 10.0},
+            ),
+            "tracking_lin_vel_y_error_cmd_0_03": MetricsTermCfg(
+                func=tracking_lin_vel_axis_error_band_mean,
+                params={"axis": 1, "command_name": "twist", "min_speed": 0.0, "max_speed": 0.3},
+            ),
+            "tracking_lin_vel_y_error_cmd_03_07": MetricsTermCfg(
+                func=tracking_lin_vel_axis_error_band_mean,
+                params={"axis": 1, "command_name": "twist", "min_speed": 0.3, "max_speed": 0.7},
+            ),
+            "tracking_lin_vel_y_error_cmd_07_up": MetricsTermCfg(
+                func=tracking_lin_vel_axis_error_band_mean,
+                params={"axis": 1, "command_name": "twist", "min_speed": 0.7, "max_speed": 10.0},
+            ),
+            "cmd_band_0_03": MetricsTermCfg(
+                func=command_band_active, params={"command_name": "twist", "min_speed": 0.0, "max_speed": 0.3}
+            ),
+            "cmd_band_03_07": MetricsTermCfg(
+                func=command_band_active, params={"command_name": "twist", "min_speed": 0.3, "max_speed": 0.7}
+            ),
+            "cmd_band_07_up": MetricsTermCfg(
+                func=command_band_active, params={"command_name": "twist", "min_speed": 0.7, "max_speed": 10.0}
+            ),
+            "wheel_raw_action_abs": MetricsTermCfg(func=wheel_raw_action_abs_mean),
+            "wheel_target_vel_abs": MetricsTermCfg(func=wheel_target_vel_abs_mean),
+            "wheel_actual_vel_abs": MetricsTermCfg(func=wheel_actual_vel_abs_mean),
+            "wheel_target_actual_vel_error": MetricsTermCfg(func=wheel_target_actual_vel_error_mean),
+            "wheel_actual_to_target_vel_ratio": MetricsTermCfg(func=wheel_actual_to_target_vel_ratio_mean),
+            "wheel_target_actual_sign_agreement": MetricsTermCfg(func=wheel_target_actual_sign_agreement),
+            "upright": MetricsTermCfg(func=upright_metric),
+            "base_ground_contact_rate": MetricsTermCfg(
+                func=base_ground_contact_metric, params={"sensor_name": "base_ground_contact"}
+            ),
+        }
+    )
 
     if play:
         cfg.episode_length_s = int(1e9)

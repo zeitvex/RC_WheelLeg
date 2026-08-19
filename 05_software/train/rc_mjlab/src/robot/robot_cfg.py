@@ -53,11 +53,11 @@ WHEEL_ACTUATOR_CFG = BuiltinVelocityActuatorCfg(
 )
 
 INIT_STATE = EntityCfg.InitialStateCfg(
-    pos=(0.0, 0.0, 0.40),
+    pos=(0.0, 0.0, 0.42),
     joint_pos={
         ".*_hip_abduction_joint": 0.0,
-        ".*_hip_pitch_joint": 0.9,
-        ".*_knee_joint": -1.8,
+        ".*_hip_pitch_joint": 0.550,
+        ".*_knee_joint": -1.125,
         ".*_wheel_joint": 0.0,
     },
     joint_vel={".*": 0.0},

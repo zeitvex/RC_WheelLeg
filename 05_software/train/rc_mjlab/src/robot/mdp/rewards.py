@@ -14,6 +14,11 @@ if TYPE_CHECKING:
     from mjlab.envs import ManagerBasedRlEnv
 
 
+def _finite(value: torch.Tensor, nan: float = 0.0, posinf: float = 0.0, neginf: float = 0.0) -> torch.Tensor:
+    """Keep diagnostic metrics finite when a terminating env has invalid physics state."""
+    return torch.nan_to_num(value, nan=nan, posinf=posinf, neginf=neginf)
+
+
 def track_linear_velocity(
     env: ManagerBasedRlEnv,
     std: float,
@@ -29,6 +34,69 @@ def track_linear_velocity(
     xy_error = torch.sum(torch.square(command[:, :2] - actual[:, :2]), dim=1)
     reward = torch.exp(-xy_error / std**2)
     reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
+    return reward
+
+
+def track_linear_velocity_x(
+    env: ManagerBasedRlEnv,
+    std: float,
+    command_name: str,
+    gravity_z_power: float | None = None,
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """LocoLeggedWheel-style independent x velocity tracking reward."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset: Entity = env.scene[asset_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    x_error = torch.square(command[:, 0] - asset.data.root_link_lin_vel_b[:, 0])
+    reward = torch.exp(-x_error / std**2)
+    if gravity_z_power is not None:
+        reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], min=0.0) ** gravity_z_power
+    else:
+        reward *= -asset.data.projected_gravity_b[:, 2]
+    return reward
+
+
+def track_linear_velocity_y(
+    env: ManagerBasedRlEnv,
+    std: float,
+    command_name: str,
+    gravity_z_power: float | None = None,
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """LocoLeggedWheel-style independent y velocity tracking reward."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset: Entity = env.scene[asset_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    y_error = torch.square(command[:, 1] - asset.data.root_link_lin_vel_b[:, 1])
+    reward = torch.exp(-y_error / std**2)
+    if gravity_z_power is not None:
+        reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], min=0.0) ** gravity_z_power
+    else:
+        reward *= -asset.data.projected_gravity_b[:, 2]
+    return reward
+
+
+def track_angular_velocity_z(
+    env: ManagerBasedRlEnv,
+    std: float,
+    command_name: str,
+    gravity_z_power: float | None = None,
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """LocoLeggedWheel-style independent yaw velocity tracking reward."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset: Entity = env.scene[asset_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    z_error = torch.square(command[:, 2] - asset.data.root_link_ang_vel_b[:, 2])
+    reward = torch.exp(-z_error / std**2)
+    if gravity_z_power is not None:
+        reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], min=0.0) ** gravity_z_power
+    else:
+        reward *= -asset.data.projected_gravity_b[:, 2]
     return reward
 
 
@@ -48,6 +116,37 @@ def track_angular_velocity(
     reward = torch.exp(-z_error / std**2)
     reward *= torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 0.7) / 0.7
     return reward
+
+
+def stair_lateral_yaw_drift_l2(
+    env: ManagerBasedRlEnv,
+    terrain_names: tuple[str, ...] = ("pyramid_stairs", "pyramid_stairs_inv"),
+    y_scale: float = 1.0,
+    yaw_scale: float = 1.0,
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Penalize sideways velocity and yaw-rate drift only on stair terrains."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset: Entity = env.scene[asset_cfg.name]
+
+    terrain = getattr(env.scene, "terrain", None)
+    terrain_types = getattr(terrain, "terrain_types", None)
+    terrain_cfg = getattr(terrain, "cfg", None)
+    terrain_generator = getattr(terrain_cfg, "terrain_generator", None)
+    if terrain_types is None or terrain_generator is None:
+        return torch.zeros(env.num_envs, device=env.device)
+
+    sub_terrain_names = list(terrain_generator.sub_terrains.keys())
+    mask = torch.zeros(env.num_envs, dtype=torch.bool, device=env.device)
+    for name in terrain_names:
+        if name in sub_terrain_names:
+            mask |= terrain_types == sub_terrain_names.index(name)
+
+    y_vel = asset.data.root_link_lin_vel_b[:, 1]
+    yaw_vel = asset.data.root_link_ang_vel_b[:, 2]
+    penalty = y_scale * torch.square(y_vel) + yaw_scale * torch.square(yaw_vel)
+    return _finite(torch.where(mask, penalty, torch.zeros_like(penalty)))
 
 
 def base_height_l2(
@@ -809,3 +908,238 @@ def pitch_control_penalty(env, max_pitch_rad: float = 0.50, asset_cfg=None) -> t
     excessive_pitch = torch.clamp(torch.abs(g_x) - g_x_threshold, min=0.0)
     reward = torch.square(excessive_pitch)
     return reward
+
+
+def tracking_lin_vel_error(env, command_name: str = "twist", asset_cfg=None) -> torch.Tensor:
+    """Current-step xy velocity tracking error."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    return _finite(torch.linalg.norm(asset.data.root_link_lin_vel_b[:, :2] - cmd[:, :2], dim=1))
+
+
+def tracking_yaw_vel_error(env, command_name: str = "twist", asset_cfg=None) -> torch.Tensor:
+    """Current-step yaw velocity tracking error."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    return _finite(torch.abs(asset.data.root_link_ang_vel_b[:, 2] - cmd[:, 2]))
+
+
+def tracking_lin_vel_x_error(env, command_name: str = "twist", asset_cfg=None) -> torch.Tensor:
+    """Current-step x velocity tracking error."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    return _finite(torch.abs(asset.data.root_link_lin_vel_b[:, 0] - cmd[:, 0]))
+
+
+def tracking_lin_vel_y_error(env, command_name: str = "twist", asset_cfg=None) -> torch.Tensor:
+    """Current-step y velocity tracking error."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    return _finite(torch.abs(asset.data.root_link_lin_vel_b[:, 1] - cmd[:, 1]))
+
+
+def tracking_lin_vel_along_command_error(
+    env,
+    command_name: str = "twist",
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Error of velocity projected onto the commanded xy direction."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    cmd_xy = cmd[:, :2]
+    cmd_speed = torch.linalg.norm(cmd_xy, dim=1)
+    direction = cmd_xy / torch.clamp(cmd_speed.unsqueeze(1), min=1.0e-6)
+    actual_along = torch.sum(asset.data.root_link_lin_vel_b[:, :2] * direction, dim=1)
+    return _finite(torch.abs(actual_along - cmd_speed))
+
+
+def actual_lin_vel_orthogonal_command_mean(
+    env,
+    command_name: str = "twist",
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Absolute velocity component perpendicular to the commanded xy direction."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    cmd_xy = cmd[:, :2]
+    cmd_speed = torch.linalg.norm(cmd_xy, dim=1)
+    direction = cmd_xy / torch.clamp(cmd_speed.unsqueeze(1), min=1.0e-6)
+    actual = asset.data.root_link_lin_vel_b[:, :2]
+    actual_along = torch.sum(actual * direction, dim=1, keepdim=True) * direction
+    orthogonal = actual - actual_along
+    return _finite(torch.linalg.norm(orthogonal, dim=1))
+
+
+def command_lin_vel_mean(env, command_name: str = "twist") -> torch.Tensor:
+    """Current commanded xy speed magnitude."""
+    cmd = env.command_manager.get_command(command_name)
+    return torch.linalg.norm(cmd[:, :2], dim=1)
+
+
+def command_yaw_vel_abs_mean(env, command_name: str = "twist") -> torch.Tensor:
+    """Current commanded yaw speed magnitude."""
+    cmd = env.command_manager.get_command(command_name)
+    return torch.abs(cmd[:, 2])
+
+
+def actual_lin_vel_mean(env, asset_cfg=None) -> torch.Tensor:
+    """Current actual xy speed magnitude."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    return _finite(torch.linalg.norm(asset.data.root_link_lin_vel_b[:, :2], dim=1))
+
+
+def tracking_lin_vel_error_band_mean(
+    env,
+    command_name: str = "twist",
+    min_speed: float = 0.0,
+    max_speed: float = 10.0,
+    asset_cfg=None,
+) -> torch.Tensor:
+    """Broadcast the masked mean xy error for a command speed band."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    speed = torch.linalg.norm(cmd[:, :2], dim=1)
+    err = _finite(torch.linalg.norm(asset.data.root_link_lin_vel_b[:, :2] - cmd[:, :2], dim=1))
+    active = torch.logical_and(speed >= min_speed, speed < max_speed)
+    denom = active.float().sum().clamp_min(1.0)
+    mean_err = torch.sum(torch.where(active, err, torch.zeros_like(err))) / denom
+    return torch.full_like(err, mean_err)
+
+
+def tracking_lin_vel_axis_error_band_mean(
+    env,
+    axis: int,
+    command_name: str = "twist",
+    min_speed: float = 0.0,
+    max_speed: float = 10.0,
+    asset_cfg=None,
+) -> torch.Tensor:
+    """Broadcast the masked mean x/y error for a command speed band."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    cmd = env.command_manager.get_command(command_name)
+    speed = torch.linalg.norm(cmd[:, :2], dim=1)
+    err = _finite(torch.abs(asset.data.root_link_lin_vel_b[:, axis] - cmd[:, axis]))
+    active = torch.logical_and(speed >= min_speed, speed < max_speed)
+    denom = active.float().sum().clamp_min(1.0)
+    mean_err = torch.sum(torch.where(active, err, torch.zeros_like(err))) / denom
+    return torch.full_like(err, mean_err)
+
+
+def command_band_active(
+    env,
+    command_name: str = "twist",
+    min_speed: float = 0.0,
+    max_speed: float = 10.0,
+) -> torch.Tensor:
+    """Fraction helper for command speed bands."""
+    cmd = env.command_manager.get_command(command_name)
+    speed = torch.linalg.norm(cmd[:, :2], dim=1)
+    return torch.logical_and(speed >= min_speed, speed < max_speed).float()
+
+
+def wheel_raw_action_abs_mean(env, action_name: str = "wheel_joint_vel") -> torch.Tensor:
+    """Mean absolute raw wheel action."""
+    action = env.action_manager.get_term(action_name).raw_action
+    return torch.mean(torch.abs(action), dim=1)
+
+
+def wheel_target_vel_abs_mean(env, action_name: str = "wheel_joint_vel") -> torch.Tensor:
+    """Mean absolute processed wheel velocity target."""
+    term = env.action_manager.get_term(action_name)
+    target = getattr(term, "_processed_actions")
+    return torch.mean(torch.abs(target), dim=1)
+
+
+def wheel_actual_vel_abs_mean(env, asset_cfg: SceneEntityCfg | None = None) -> torch.Tensor:
+    """Mean absolute actual wheel joint velocity."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot", joint_names=(".*_wheel_joint",))
+    asset = env.scene[asset_cfg.name]
+    joint_ids = asset.find_joints(asset_cfg.joint_names)[0]
+    return _finite(torch.mean(torch.abs(asset.data.joint_vel[:, joint_ids]), dim=1))
+
+
+def wheel_target_actual_vel_error_mean(
+    env,
+    action_name: str = "wheel_joint_vel",
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Mean absolute error between processed wheel target and actual wheel velocity."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot", joint_names=(".*_wheel_joint",))
+    term = env.action_manager.get_term(action_name)
+    target = getattr(term, "_processed_actions")
+    asset = env.scene[asset_cfg.name]
+    joint_ids = asset.find_joints(asset_cfg.joint_names)[0]
+    actual = asset.data.joint_vel[:, joint_ids]
+    return _finite(torch.mean(torch.abs(target - actual), dim=1))
+
+
+def wheel_actual_to_target_vel_ratio_mean(
+    env,
+    action_name: str = "wheel_joint_vel",
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Mean |actual wheel velocity| / |target wheel velocity|, clipped for readable logs."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot", joint_names=(".*_wheel_joint",))
+    term = env.action_manager.get_term(action_name)
+    target = getattr(term, "_processed_actions")
+    asset = env.scene[asset_cfg.name]
+    joint_ids = asset.find_joints(asset_cfg.joint_names)[0]
+    actual = asset.data.joint_vel[:, joint_ids]
+    ratio = torch.abs(actual) / torch.clamp(torch.abs(target), min=0.1)
+    return _finite(torch.mean(torch.clamp(ratio, max=3.0), dim=1))
+
+
+def wheel_target_actual_sign_agreement(
+    env,
+    action_name: str = "wheel_joint_vel",
+    asset_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Fraction of wheel targets and actual velocities with matching sign."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot", joint_names=(".*_wheel_joint",))
+    term = env.action_manager.get_term(action_name)
+    target = getattr(term, "_processed_actions")
+    asset = env.scene[asset_cfg.name]
+    joint_ids = asset.find_joints(asset_cfg.joint_names)[0]
+    actual = asset.data.joint_vel[:, joint_ids]
+    active = torch.abs(target) > 0.1
+    same_sign = torch.sign(target) == torch.sign(actual)
+    return torch.sum((active & same_sign).float(), dim=1) / torch.clamp(torch.sum(active.float(), dim=1), min=1.0)
+
+
+def upright_metric(env, asset_cfg=None) -> torch.Tensor:
+    """1 means upright, 0 means fully inverted according to projected gravity."""
+    if asset_cfg is None:
+        asset_cfg = SceneEntityCfg("robot")
+    asset = env.scene[asset_cfg.name]
+    return torch.clamp(-asset.data.projected_gravity_b[:, 2], 0.0, 1.0)
+
+
+def base_ground_contact_metric(env, sensor_name: str) -> torch.Tensor:
+    """Per-step base contact flag for diagnosing reset-biased metrics."""
+    sensor = env.scene[sensor_name]
+    contact = sensor.data.found > 0
+    while contact.ndim > 1:
+        contact = torch.any(contact, dim=-1)
+    return contact.float()

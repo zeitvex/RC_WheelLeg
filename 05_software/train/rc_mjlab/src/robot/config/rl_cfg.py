@@ -33,9 +33,9 @@ def rough_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             value_loss_coef=1.0,
             use_clipped_value_loss=True,
             clip_param=0.2,
-            entropy_coef=0.001,#第一轮为0.003
-            num_learning_epochs=5,
-            num_mini_batches=4,
+            entropy_coef=0.003,#第一轮为0.003，第二轮0.001，第三轮0.0008
+            num_learning_epochs=5,#2048为5 4096为3
+            num_mini_batches=4,#2048为4 4096为8
             learning_rate=8.0e-4,
             schedule="adaptive",
             gamma=0.99,
