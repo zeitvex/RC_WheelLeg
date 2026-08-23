@@ -87,9 +87,14 @@ class MuJoCoIO:
         return out_xml_path
 
     def _rebuild_actuators(self, spec):
-        actuators_to_delete = list(spec.actuators)
-        for act in actuators_to_delete:
-            spec.delete(act)
+        if hasattr(spec, "delete"):
+            actuators_to_delete = list(spec.actuators)
+            for act in actuators_to_delete:
+                spec.delete(act)
+        else:
+            actuators_to_delete = list(spec.actuators)
+            for act in actuators_to_delete:
+                act.delete()
         
         # Keep sim2sim aligned with the training robot config and sim2real runtime:
         # leg position PD = (50.0, 1.5), wheel velocity damping = 1.0.

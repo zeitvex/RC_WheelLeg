@@ -8,6 +8,8 @@
 - `mjlab[cu128]`
 - PyTorch CUDA 12.8 环境
 - `pynput`
+- 后期 Sim2Sim 可选依赖：Pygame、ONNX Runtime
+- 导航打点可选依赖：Pygame、Pillow
 
 精确解析结果保存在 `uv.lock`。项目使用本地可编辑的 `mjlab`：
 
@@ -37,6 +39,18 @@ mjlab = { path = "mjlab", editable = true }
 uv sync
 uv run train Robot-Flat-v0
 uv run play Robot-Rough-v0
+```
+
+根 `uv.lock` 保留比赛训练环境的历史解析结果。后期 Sim2Sim 新增依赖单独保存在 `sim2sim/requirements.txt`，运行时叠加，避免重新锁定时升级历史 MuJoCo nightly：
+
+```bash
+uv run --with-requirements sim2sim/requirements.txt python sim2sim/nav_sim2sim.py
+```
+
+导航打点工具同样不修改历史锁文件：
+
+```bash
+uv run --with-requirements tools/nav_tools/requirements.txt python tools/nav_tools/nav_map_viewer.py
 ```
 
 GPU、CUDA、MuJoCo development wheel 和驱动版本必须满足 `pyproject.toml` 与 `uv.lock` 的约束。

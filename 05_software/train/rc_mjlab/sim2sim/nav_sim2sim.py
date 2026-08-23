@@ -324,9 +324,11 @@ def main():
     terrain_dir = Path(__file__).parent / "terrain"
     terrain_xml = terrain_dir / "scene_terrain.xml"
     robot_xml = project_root / "mjcf" / "wheelleg.xml"
+    rough_onnx = project_root / "model_6800.onnx"
+    crawl_onnx = project_root / "model_crawl.onnx"
     policy_path = {
-        "rough": project_root / "model_rough.pt",
-        "crawl": project_root / "model_crawl.pt"
+        "rough": rough_onnx if rough_onnx.exists() else project_root / "model_rough.pt",
+        "crawl": crawl_onnx if crawl_onnx.exists() else project_root / "model_crawl.pt"
     }
 
     # 1. 解析 XML 地图障碍物，实现 100% 可视化精准对应

@@ -5,7 +5,7 @@
 ```text
 05_software/
 ├─ train/
-│  └─ rc_mjlab/       # 训练、MJCF、Sim2Sim 和本地 mjlab 依赖
+│  └─ rc_mjlab/       # 训练、MJCF、MuJoCo、Sim2Sim 和本地 mjlab 依赖
 └─ real/
    ├─ ik_real/        # IK 轨迹与早期真机控制
    └─ sim2real/       # 第一代 Python 策略真机部署
@@ -19,6 +19,8 @@ MJCF + mjlab task
         v
    PPO 训练策略
         |
+        +----> MuJoCo 姿态 / IK / MPC 调试
+        |
         +----> Sim2Sim 策略验证
         |
         +----> Python Sim2Real ----> 电机 / IMU
@@ -26,7 +28,7 @@ MJCF + mjlab task
 IK real --------------------------------> 电机
 ```
 
-`rc_mjlab` 是自包含工程。训练、MJCF、Sim2Sim 和策略权重通过相对路径绑定，因此保留其内部布局，没有为了目录外观拆散。第一代完整闭环见 `v0.3.0`，第一份新版 MJCF 与训练框架见 `v0.4.0`，随机化增强版见 `v0.5.0`，比赛最终训练架构见 `v0.6.0`。
+`rc_mjlab` 是自包含工程。训练、MJCF、MuJoCo、Sim2Sim、导航工具和策略权重通过相对路径绑定，因此保留其内部布局，没有为了目录外观拆散。第一代完整闭环见 `v0.3.0`，第一份新版 MJCF 与训练框架见 `v0.4.0`，随机化增强版见 `v0.5.0`，比赛最终训练架构见 `v0.6.0`，后期 MuJoCo 工具集见 `v0.7.0`，后期 Sim2Sim 与比赛 Rough 策略见 `v0.8.0`，完整导航打点工具见 `v0.8.1`。
 
 详细说明见：
 

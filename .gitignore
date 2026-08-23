@@ -36,6 +36,9 @@ checkpoints/
 wandb/
 sim2sim_log_*.txt
 **/sim2sim_temp.xml
+**/route_check_runs/
+**/route_experiments/suite_*/
+**/tools/nav_tools/points/auto_candidates/
 
 # IDE and operating system files
 .idea/

@@ -2,7 +2,7 @@
 
 基于 [mjlab](https://github.com/google-deepmind/mjlab) 框架的四轮腿混合机器人强化学习训练与部署部署项目，面向机器人竞赛场景（如越障、匍匐、斜坡、台阶等复合任务）。
 
-> 本目录对应 `v0.6.0`：比赛使用的最终训练架构。它在前两版训练代码上重新平衡随机化强度，引入分轴速度奖励、自适应命令课程、障碍逐步释放、楼梯稳定约束和训练诊断指标。当前目录中的 `model_rough.pt` 是早期参考权重；比赛最终使用的 `model_6800.onnx` 将随最终部署版本归档。
+> 当前目录对应 `v0.8.1`：保留比赛训练架构、后期 MuJoCo/Sim2Sim 和比赛最终 Rough 策略，并补充导航地图、打点工具、路线迭代与抽样 PCD。`model_rough.pt` 仍作为早期参考权重保留。
 
 ---
 
@@ -41,6 +41,10 @@ rc_mjlab/
 │       └── competition_terrains.py   # 竞赛自定义地形（高墙障碍、低杆障碍）
 ├── sim2sim/                      # Sim2Sim 物理部署与高精度交互回放工具
 │   ├── nav_sim2sim.py            # 主程序：2D Pygame 交互面板 + 全自动多地形导航追踪
+│   ├── nav_route_sim2sim_check.py # ONNX 策略批量路线检查
+│   ├── ik_slalom_sim2sim.py      # 纯 IK、路径跟踪与绕桩验证
+│   ├── ik_compensation_sweep.py  # IK 补偿参数扫描
+│   ├── export_onnx.py            # PT actor 导出与 ONNX 一致性检查
 │   ├── sim2sim.py                # 简易版键盘调试工具
 │   ├── interface/
 │   │   └── mujoco_io.py          # MuJoCo 输入输出与传感器、低通滤波器接口
@@ -53,7 +57,10 @@ rc_mjlab/
 │   ├── wheelleg.xml              # 机器人 MuJoCo 模型（含网格引用）
 │   ├── scene.xml                 # mjlab 场景入口文件
 │   └── meshes/                   # STL/OBJ 碰撞与外观网格
-├── model_rough.pt                # 本阶段用于回放和 Sim2Sim 的 Rough 策略
+├── mujoco_sim/                   # 姿态、IK、动力学和 MPC 独立工具
+├── tools/nav_tools/              # 地图/PCD/航点编辑、路线检查与比赛路线数据
+├── model_rough.pt                # 早期 Rough 参考 checkpoint
+├── model_6800.onnx               # 比赛最终 Rough 策略
 ├── pyproject.toml                # 项目依赖（uv 管理，含清华镜像源加速）
 └── uv.lock                       # 精确依赖锁定文件
 ```
@@ -87,6 +94,10 @@ uv run play Robot-Rough-v0
 cd sim2sim
 uv run python nav_sim2sim.py
 ```
+
+后期 Sim2Sim 的入口、模型边界和批量检查命令见 [`sim2sim/README.md`](sim2sim/README.md)。
+
+导航打点工具、路线快照和抽样点云说明见 [`tools/nav_tools/README.md`](tools/nav_tools/README.md)。
 
 ---
 

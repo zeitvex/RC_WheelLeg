@@ -1,0 +1,72 @@
+<mujoco model="nav_tools terrain B_C">
+  <statistic center="-5.5 -1.9 0.4" extent="5.0" />
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0" />
+    <rgba haze="0.15 0.25 0.35 1" />
+    <global azimuth="90" elevation="-20" />
+  </visual>
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300" />
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2" />
+  </asset>
+  <worldbody>
+    <!-- 比赛地图基准地面。 -->
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" />
+    <!-- 14m x 6m outer boundary, mirrored from A_C across the x axis. -->
+    <geom name="border_x_min" pos="-9.5 -1.9 0.15" type="box" size="0.025 3.0 0.15" rgba="0.05 0.05 0.05 1" />
+    <geom name="border_x_max" pos="4.401477 -1.937395 0.15" type="box" size="0.025 3.0 0.15" rgba="0.05 0.05 0.05 1" />
+    <geom name="border_y_min" pos="-2.5 -4.9 0.15" type="box" size="7.0 0.025 0.15" rgba="0.05 0.05 0.05 1" />
+    <geom name="border_y_max" pos="-2.5 1.1 0.15" type="box" size="7.0 0.025 0.15" rgba="0.05 0.05 0.05 1" />
+    <!-- 高墙：机器人需从上方跃过或攀爬通过，自动/遥控均可计分。 -->
+    <geom pos="-3.589248 0.022509 0.15" type="box" size="0.025 0.5 0.15" quat="1 0 0 0" rgba="1.0 0.9 0.4 1.0" />
+    <!-- 砂砾碎木坑：L 形障碍，需从 1m 短边进入或离开，完整通过才计分。 -->
+    <geom pos="-8.430146 -2.855226 0.075" type="box" size="0.5 0.5 0.075" quat="0.707107 0 0 0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-7.930146 -3.855226 0.075" type="box" size="0.5 1.0 0.075" quat="0.707107 0 0 0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <!-- 限高杆：机器人需从横杆下方通过，碰落横杆则越障失败。 -->
+    <geom pos="-5.231818 -4.372727 0.155" type="cylinder" size="0.025 0.155" quat="0.707107 0 0 -0.707107" rgba="0.8 0.1 0.1 1.0" />
+    <geom pos="-5.231818 -3.372727 0.155" type="cylinder" size="0.025 0.155" quat="0.707107 0 0 -0.707107" rgba="0.8 0.1 0.1 1.0" />
+    <geom pos="-5.231818 -3.872727 0.325" type="cylinder" size="0.015 0.5" quat="0.5 0.5 -0.5 -0.5" rgba="1.0 0.9 0.4 1.0" />
+    <!-- 启动区：规则允许地面和 T 字形台阶上各一个启动区，机器人需完全纳入启动区后开始。 -->
+    <geom pos="-5.5 -1.9 0" type="box" size="0.5 0.5 0.001" rgba="1.0 0.0 0.0 0.35" contype="0" conaffinity="0" />
+    <!-- T 字形台阶：可选启动区之一在最高平台；通过时每一级台阶顶面需至少接触一次。 -->
+    <geom pos="-1.25 0 0.05" type="box" size="0.15 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-0.95 0 0.15" type="box" size="0.15 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-0.65 0 0.25" type="box" size="0.15 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="0 0 0.35" type="box" size="0.5 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="0.65 0 0.25" type="box" size="0.15 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="0.95 0 0.15" type="box" size="0.15 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="1.25 0 0.05" type="box" size="0.15 0.5 0.05" quat="1 0 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="0 -0.65 0.25" type="box" size="0.15 0.5 0.05" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="0 -0.95 0.15" type="box" size="0.15 0.5 0.05" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="0 -1.25 0.05" type="box" size="0.15 0.5 0.05" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <!-- 大斜坡、木桥 A / 木桥 B：大斜坡需满足长边行走距离要求；木桥需从一侧平台经木桥到达另一侧平台。 -->
+    <geom pos="2.521477 -0.037395 0.1" type="box" size="0.40 0.5 0.005" quat="0.992546 -0.12187 0 0" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="3.401477 -0.037395 0.1" type="box" size="0.5 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="3.401477 -0.887395 0.1" type="box" size="0.2 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="3.401477 -1.437395 0.1" type="box" size="0.2 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="3.401477 -1.987395 0.1" type="box" size="0.2 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="3.401477 -2.537395 0.1" type="box" size="0.2 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="3.401477 -3.087395 0.1" type="box" size="0.2 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="2.901477 -3.937395 0.1" type="box" size="0.5 1.0 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="2.401477 -3.037595 0.0951" type="box" size="0.4133 0.5 0.005" quat="0.701836 -0.086174 0.086174 -0.701836" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="1.151477 -3.587395 0.1" type="box" size="0.1 0.75 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="1.151477 -3.887395 0.1" type="box" size="0.1 0.75 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="1.151477 -4.187395 0.1" type="box" size="0.1 0.75 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-0.098523 -3.937395 0.1" type="box" size="0.5 0.5 0.10" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-1.598523 -2.871195 0.0951" type="box" size="0.5759 2.0 0.005" quat="0.704416 -0.061629 0.061629 -0.704416" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-2.098523 -4.005495 0.0951" type="box" size="0.5759 1.5 0.005" quat="0.704416 0.061629 -0.061629 -0.704416" rgba="0.75 0.72 0.55 1.0" />
+    <!-- 直角绕杆：需按 S 形绕过竖杆，并经过两端及拐角必达区。 -->
+    <geom pos="-6.075243 0.034483 0" type="cylinder" size="0.1 0.001" rgba="1.0 0.0 0.0 0.35" contype="0" conaffinity="0" />
+    <geom pos="-8.475243 -1.365517 0" type="cylinder" size="0.1 0.001" rgba="1.0 0.0 0.0 0.35" contype="0" conaffinity="0" />
+    <geom pos="-8.725243 0.284483 0" type="cylinder" size="0.1 0.001" rgba="1.0 0.0 0.0 0.35" contype="0" conaffinity="0" />
+    <geom pos="-6.475243 0.034483 0.02" type="cylinder" size="0.05 0.02" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-6.475243 0.034483 0.37" type="cylinder" size="0.015 0.33" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-7.475243 0.034483 0.02" type="cylinder" size="0.05 0.02" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-7.475243 0.034483 0.37" type="cylinder" size="0.015 0.33" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-8.475243 0.034483 0.02" type="cylinder" size="0.05 0.02" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-8.475243 0.034483 0.37" type="cylinder" size="0.015 0.33" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-8.475243 -0.965517 0.02" type="cylinder" size="0.05 0.02" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+    <geom pos="-8.475243 -0.965517 0.37" type="cylinder" size="0.015 0.33" quat="0.707107 0 0 -0.707107" rgba="0.75 0.72 0.55 1.0" />
+  </worldbody>
+</mujoco>

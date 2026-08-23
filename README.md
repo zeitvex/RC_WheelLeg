@@ -22,8 +22,8 @@
 * 构型：4 条轮腿，每条腿 3 个腿部关节和 1 个驱动轮
 * 执行器：共 16 个执行器（RS02）
 * 控制路线：强化学习训练、MuJoCo 仿真、Sim2Sim 验证、Python Sim2Real 真机部署
-* 当前状态：**第二代软件相关**已更新、MJCF 相关参数订正，mjlab 训练框架已完成首轮整理；已增强观测噪声、延迟、动力学随机化和持续外力扰动配置；
-* 当前版本：`v0.3.0` 已整理比赛最终训练架构，包含分轴奖励、自适应指令课程、障碍释放课程、比赛站姿和训练诊断指标；
+* 当前状态：**第二代软件相关**已更新、MJCF 相关参数订正，mjlab 训练框架已完成首轮整理；`v0.5.0` 已增强观测噪声、延迟、动力学随机化和持续外力扰动配置；
+* 当前版本：`v0.3.0` 已整理比赛最终训练架构，包含分轴奖励、自适应指令课程、障碍释放课程、比赛站姿和训练诊断指标；`v0.8.1` 已补充后期 Sim2Sim、导航打点、路线检查和抽样 PCD 工具；
 * 硬件、固件、BOM、装配和比赛最终版本仍在持续补充
 
 ## 开源内容
@@ -42,6 +42,7 @@
 * 整机、身体、关节、腿部和轮组 STEP 文件，整机入口为 `02_mechanical/STEP/WEEKDOG.STEP`。
 * 新一代 `mjlab` 训练任务和本地依赖，位于 `05_software/train/rc_mjlab/`。
 * 16DOF 轮足 MuJoCo/MJCF 模型、网格、Sim2Sim 验证工具和早期策略权重。
+* 后期 Sim2Sim 工具、导航地图与打点工具、路线数据和抽样 PCD，位于 `05_software/train/rc_mjlab/`。
 * IK 轨迹与早期真机控制探索，位于 `05_software/real/ik_real/`。
 * 新一代 Python Sim2Real 部署栈，包含策略运行时、电机映射、IMU 接入、站立初始化、安全检查、Web 调试和标定工具。
 * 新一代 Sim2Real 真机验证视频与预览图。
@@ -116,6 +117,8 @@ RC_WheelLeg/
 * [`05_software/README.md`](05_software/README.md)
 * [`05_software/train/README.md`](05_software/train/README.md)
 * [`05_software/train/rc_mjlab/README.md`](05_software/train/rc_mjlab/README.md)
+* [`05_software/train/rc_mjlab/sim2sim/README.md`](05_software/train/rc_mjlab/sim2sim/README.md)
+* [`05_software/train/rc_mjlab/tools/nav_tools/README.md`](05_software/train/rc_mjlab/tools/nav_tools/README.md)
 * [`05_software/real/README.md`](05_software/real/README.md)
 * [`05_software/real/sim2real/README.md`](05_software/real/sim2real/README.md)
 

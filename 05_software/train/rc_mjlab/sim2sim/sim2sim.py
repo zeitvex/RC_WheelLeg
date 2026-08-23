@@ -41,6 +41,19 @@ class PolicyMLP(nn.Module):
 
 
 def load_policy(model_path, device):
+    if str(model_path).endswith('.onnx'):
+        import onnxruntime as ort
+        session = ort.InferenceSession(str(model_path))
+        class OnnxWrapper:
+            def __init__(self, session):
+                self.session = session
+            def __call__(self, x):
+                inputs = {self.session.get_inputs()[0].name: x.cpu().numpy()}
+                out = self.session.run(None, inputs)[0]
+                return torch.tensor(out, device=x.device)
+        return OnnxWrapper(session)
+
+
     ckpt = torch.load(model_path, map_location=device, weights_only=False)
     state_dict = ckpt["actor_state_dict"]
     model = PolicyMLP()
@@ -131,7 +144,9 @@ def main():
     terrain_dir = Path(__file__).parent / "terrain"
     terrain_xml = terrain_dir / "scene_terrain.xml"
     robot_xml = Path(__file__).parent.parent / "mjcf" / "wheelleg.xml"
-    policy_path = Path(__file__).parent.parent / "model_1700.pt"
+    policy_path = Path(__file__).parent.parent / "model_6800.onnx"
+    if not policy_path.exists():
+        policy_path = Path(__file__).parent.parent / "model_rough.pt"
     hfield_dir = terrain_dir
 
     temp_xml = project_root / "mjcf" / "sim2sim_temp.xml"

@@ -3,7 +3,10 @@ import torch.nn as nn
 import numpy as np
 from collections import deque
 from pathlib import Path
-from pynput import keyboard
+try:
+    from pynput import keyboard
+except ImportError:
+    keyboard = None
 
 # ============================================================
 # Policy Model
@@ -26,6 +29,28 @@ class PolicyMLP(nn.Module):
 
 
 def load_policy(model_path, device):
+    if str(model_path).endswith('.onnx'):
+        import onnxruntime as ort
+        session = ort.InferenceSession(str(model_path))
+        class OnnxWrapper:
+            def __init__(self, session):
+                self.session = session
+                self.obs_dim = session.get_inputs()[0].shape[1]
+                if isinstance(self.obs_dim, str):
+                    self.obs_dim = 53
+                class MockMean:
+                    def __init__(self, d):
+                        self.d = d
+                    def numel(self):
+                        return self.d
+                self.obs_mean = MockMean(self.obs_dim)
+
+            def __call__(self, x):
+                inputs = {self.session.get_inputs()[0].name: x.cpu().numpy()}
+                out = self.session.run(None, inputs)[0]
+                return torch.tensor(out, device=x.device)
+        return OnnxWrapper(session)
+
     ckpt = torch.load(model_path, map_location=device, weights_only=False)
     state_dict = ckpt["actor_state_dict"]
     
@@ -129,9 +154,13 @@ class PolicyRunner:
         ], dtype=np.float32)
 
         # Background keyboard listener for seamless switcher keys ('1' and '2')
-        self.listener = keyboard.Listener(on_press=self._on_press)
-        self.listener.start()
-        print("[PolicyRunner] Background Keyboard Switcher active: Press '1' for ROUGH, '2' for CRAWL")
+        self.listener = None
+        if keyboard is not None:
+            self.listener = keyboard.Listener(on_press=self._on_press)
+            self.listener.start()
+            print("[PolicyRunner] Background Keyboard Switcher active: Press '1' for ROUGH, '2' for CRAWL")
+        else:
+            print("[PolicyRunner] pynput not installed; background keyboard switcher disabled.")
 
     def _on_press(self, key):
         try:
