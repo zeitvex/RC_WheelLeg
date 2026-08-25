@@ -1,6 +1,6 @@
-# 第一代真机控制
+# 真机控制与部署
 
-本目录保存 16DOF 轮足机器人的早期真机控制实现。
+本目录保存 16DOF 轮足机器人从早期接口验证到最终比赛 ROS 2 部署的演进。
 
 ## `ik_real`
 
@@ -19,6 +19,18 @@
 - 对齐、标定和独立检查工具
 
 部署说明见 [`sim2real/README.md`](sim2real/README.md) 与 [`sim2real/DEPLOYMENT.md`](sim2real/DEPLOYMENT.md)。
+
+## `sim2real_ros2`
+
+`last_not_slalom_1050` 最终比赛工程的规范化归档，包含：
+
+- ROS 2 Humble + C++ 运行时
+- 50 Hz 策略推理与 200 Hz CAN 电机热路径
+- Rough `model_6800`、Wall `model_84` 和 Crawl IK 模式
+- Odin IMU/里程计驱动、简单导航、命令仲裁和触控屏 UI
+- 比赛路线、抽样 PCD、Docker 与部署说明
+
+`1050` 是比赛得分，不是模型编号。完整入口与缺失的 Odin 重定位地图边界见 [`sim2real_ros2/README.md`](sim2real_ros2/README.md)。
 
 ## 实机记录
 

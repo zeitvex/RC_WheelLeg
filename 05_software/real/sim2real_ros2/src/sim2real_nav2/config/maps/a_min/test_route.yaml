@@ -1,0 +1,155 @@
+name: test_route
+map: map_b
+frame_id: map
+yaw_tolerance_deg_default: 30.0
+segments:
+  - name: segment_1
+    obstacle: slalom
+    waypoints:
+      - id: 1
+        x: 5.3590
+        y: 2.4420
+        yaw_deg: 0.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 2
+        x: 6.9240
+        y: 2.3880
+        yaw_deg: -90.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 3
+        x: 6.8340
+        y: 0.9200
+        yaw_deg: -5.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 4
+        x: 9.3680
+        y: 0.7060
+        yaw_deg: -3.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 5
+        x: 11.3730
+        y: 0.4300
+        yaw_deg: 0.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 6
+        x: 12.8770
+        y: 0.4320
+        yaw_deg: 90.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.10
+      - id: 7
+        x: 12.9350
+        y: 2.2410
+        yaw_deg: 88.2
+        speed: 0.35
+        policy: rough
+        tolerance: 0.10
+      - id: 8
+        x: 12.9910
+        y: 4.2770
+        yaw_deg: 180.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.10
+      - id: 9
+        x: 12.0040
+        y: 4.3390
+        yaw_deg: -90.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 10
+        x: 11.8720
+        y: 2.5830
+        yaw_deg: 180.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 11
+        x: 9.5719
+        y: 2.7972
+        yaw_deg: 174.7
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 12
+        x: 9.5080
+        y: 3.5620
+        yaw_deg: 180.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 13
+        x: 8.4140
+        y: 3.5730
+        yaw_deg: 125.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 14
+        x: 7.8670
+        y: 4.5280
+        yaw_deg: 180.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 15
+        x: 5.8060
+        y: 4.7430
+        yaw_deg: 180.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.15
+      - id: 16
+        x: 4.9260
+        y: 4.7850
+        yaw_deg: 180.0
+        speed: 0.35
+        policy: ik
+        tolerance: 0.10
+      - id: 17
+        x: 3.2951
+        y: 4.7963
+        yaw_deg: 179.6
+        speed: 0.35
+        policy: ik
+        tolerance: 0.10
+      - id: 18
+        x: 3.0920
+        y: 4.7770
+        yaw_deg: -180.0
+        speed: 0.35
+        policy: ik
+        tolerance: 0.10
+      - id: 19
+        x: 1.6940
+        y: 4.8860
+        yaw_deg: 210.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.10
+      - id: 20
+        x: 1.0550
+        y: 4.5480
+        yaw_deg: -90.0
+        speed: 0.35
+        policy: rough
+        tolerance: 0.10
+      - id: 21
+        x: 1.0420
+        y: 2.9200
+        yaw_deg: -90.4
+        speed: 0.35
+        policy: rough
+        tolerance: 0.10

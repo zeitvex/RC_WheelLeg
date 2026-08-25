@@ -1,4 +1,4 @@
-﻿# RC_WheelLeg
+# RC_WheelLeg
 
 山东华宇工学院 HYNova 战队轮足机器人项目的开源仓库。
 
@@ -21,9 +21,9 @@
 * 平台：Jetson Orin Nano 8G
 * 构型：4 条轮腿，每条腿 3 个腿部关节和 1 个驱动轮
 * 执行器：共 16 个执行器（RS02）
-* 控制路线：强化学习训练、MuJoCo 仿真、Sim2Sim 验证、Python Sim2Real 真机部署
+* 控制路线：强化学习训练、MuJoCo 仿真、Sim2Sim 验证、Python Sim2Real 与 ROS 2/C++ 真机部署
 * 当前状态：**第二代软件相关**已更新、MJCF 相关参数订正，mjlab 训练框架已完成首轮整理；`v0.5.0` 已增强观测噪声、延迟、动力学随机化和持续外力扰动配置；
-* 当前版本：`v0.3.0` 已整理比赛最终训练架构，包含分轴奖励、自适应指令课程、障碍释放课程、比赛站姿和训练诊断指标；已补充后期 Sim2Sim、导航打点、路线检查和抽样 PCD 工具；
+* 当前版本：`v0.3.0` 已整理比赛最终训练架构，包含分轴奖励、自适应指令课程、障碍释放课程、比赛站姿和训练诊断指标；已补充后期 Sim2Sim、导航打点、路线检查、抽样 PCD 工具和最终比赛 ROS 2 真机工程；
 * 硬件、固件、BOM、装配和比赛最终版本仍在持续补充
 
 ## 开源内容
@@ -45,6 +45,7 @@
 * 后期 Sim2Sim 工具、导航地图与打点工具、路线数据和抽样 PCD，位于 `05_software/train/rc_mjlab/`。
 * IK 轨迹与早期真机控制探索，位于 `05_software/real/ik_real/`。
 * 新一代 Python Sim2Real 部署栈，包含策略运行时、电机映射、IMU 接入、站立初始化、安全检查、Web 调试和标定工具。
+* 最终比赛 ROS 2/C++ Sim2Real 工程，包含策略运行时、CAN 电机热路径、Odin 接入、导航路线、触控屏 UI、Docker 和部署说明，位于 `05_software/real/sim2real_ros2/`。
 * 新一代 Sim2Real 真机验证视频与预览图。
 
 ### 后续整理内容
@@ -121,6 +122,7 @@ RC_WheelLeg/
 * [`05_software/train/rc_mjlab/tools/nav_tools/README.md`](05_software/train/rc_mjlab/tools/nav_tools/README.md)
 * [`05_software/real/README.md`](05_software/real/README.md)
 * [`05_software/real/sim2real/README.md`](05_software/real/sim2real/README.md)
+* [`05_software/real/sim2real_ros2/README.md`](05_software/real/sim2real_ros2/README.md)
 
 媒体资料：
 
@@ -142,6 +144,8 @@ MJCF + mjlab task
         +----> Sim2Sim 策略验证
         |
         +----> Python Sim2Real ----> 电机 / IMU
+        |
+        +----> ROS 2/C++ Sim2Real -> CAN / Odin / 导航 / 屏幕
 
 IK real --------------------------------> 电机
 ```
@@ -149,6 +153,8 @@ IK real --------------------------------> 电机
 其中 `rc_mjlab` 是自包含训练与仿真工程，包含 `src/robot` 训练任务、`mjcf` 模型、`mujoco_sim` 独立调试工具、`sim2sim` 验证工具、本地 `mjlab` 依赖和早期策略权重。
 
 `sim2real` 当前部署 `53D -> 16D` 策略模型，控制频率为 50Hz，包含站立初始化、站立平衡、运行时安全检查、零命令保持和首次命令平滑释放逻辑。部署前应先阅读 `05_software/real/sim2real/README.md`、`DEPLOYMENT.md` 和 `ORIN_NANO_DEPLOYMENT.md`。
+
+`sim2real_ros2` 是 `backup-v0.9.0-ros2-final` 整理出的最终比赛 ROS 2/C++ 真机工程，包含 Rough `model_6800`、Wall `model_84`、Crawl IK、Odin IMU/里程计接入、简单导航、命令仲裁、触控屏 UI、比赛路线、抽样 PCD、Docker 和部署说明。完整入口见 `05_software/real/sim2real_ros2/README.md`。
 
 
 
