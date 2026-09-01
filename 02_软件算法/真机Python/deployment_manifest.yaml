@@ -1,0 +1,71 @@
+model:
+  path: "/home/rc2/work/rcwork/real/rc_mjlab/rc_mjlab/model_rough.pt"
+  obs_dim: 53
+  action_dim: 16
+  enable_zero_cmd_suppression: true
+
+observation:
+  terms:
+    - name: base_ang_vel
+      dim: 3
+      scale: 0.25
+    - name: projected_gravity
+      dim: 3
+    - name: command
+      dim: 3
+    - name: joint_pos_rel
+      dim: 12
+    - name: joint_vel_rel
+      dim: 12
+      scale: 0.05
+    - name: wheel_vel
+      dim: 4
+      scale: 0.05
+    - name: last_actions
+      dim: 16
+
+action:
+  scale:
+    - 0.125
+    - 0.25
+    - 0.25
+    - 0.125
+    - 0.25
+    - 0.25
+    - 0.125
+    - 0.25
+    - 0.25
+    - 0.125
+    - 0.25
+    - 0.25
+    - 5.0
+    - 5.0
+    - 5.0
+    - 5.0
+  default_dof_pos:
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+
+control:
+  control_freq_hz: 50
+  leg_lpf_hz: 5
+  wheel_lpf_hz: 15
+
+safety:
+  zero_cmd_lin_thresh: 0.05
+  zero_cmd_yaw_thresh: 0.05
+  zero_yaw_rate_thresh: 0.10

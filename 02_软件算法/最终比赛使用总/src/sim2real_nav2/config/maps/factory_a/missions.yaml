@@ -1,0 +1,8 @@
+missions:
+  test_roundtrip:
+    description: "test_p1 -> test_p2 -> test_p1"
+    loop: false
+    goals:
+      - test_p1
+      - test_p2
+      - test_p1

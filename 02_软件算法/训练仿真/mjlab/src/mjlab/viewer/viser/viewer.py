@@ -1,0 +1,570 @@
+"""mjlab play viewer based on Viser with simulation controls.
+
+Adapted from an MJX visualizer by Chung Min Kim: https://github.com/chungmin99/
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from enum import Enum, auto
+from threading import Event, Lock
+from typing import Any, Optional
+
+import torch
+import viser
+from typing_extensions import override
+
+from mjlab.sensor.raycast_sensor import RayCastSensor
+from mjlab.sim.sim import Simulation
+from mjlab.viewer.base import (
+  BaseViewer,
+  EnvProtocol,
+  PolicyProtocol,
+  VerbosityLevel,
+  ViewerAction,
+)
+from mjlab.viewer.viser.overlays import (
+  ViserCameraOverlays,
+  ViserContactOverlays,
+  ViserDebugOverlays,
+  ViserTermOverlays,
+)
+from mjlab.viewer.viser.scene import MjlabViserScene
+
+
+@dataclass
+class CheckpointManager:
+  """Holds checkpoint discovery and loading callbacks for the viewer."""
+
+  current_name: str
+  fetch_available: Callable[[], list[tuple[str, str]]]
+  load_checkpoint: Callable[[str], PolicyProtocol]
+  run_name: str | None = None
+  run_url: str | None = None
+  run_status: str | None = None
+
+
+def format_time_ago(seconds: int) -> str:
+  """Format a duration in seconds as a human-readable time-ago string."""
+  for div, unit in ((86400, "d"), (3600, "h"), (60, "m")):
+    if seconds >= div:
+      return f"{seconds // div}{unit} ago"
+  return f"{seconds}s ago"
+
+
+class UpdateReason(Enum):
+  ACTION = auto()
+  ENV_SWITCH = auto()
+  SCENE_REQUEST = auto()
+
+
+class ViserPlayViewer(BaseViewer):
+  """Interactive Viser-based viewer with playback controls."""
+
+  def __init__(
+    self,
+    env: EnvProtocol,
+    policy: PolicyProtocol,
+    frame_rate: float = 60.0,
+    verbosity: VerbosityLevel = VerbosityLevel.SILENT,
+    viser_server: viser.ViserServer | None = None,
+    checkpoint_manager: CheckpointManager | None = None,
+  ) -> None:
+    super().__init__(env, policy, frame_rate, verbosity)
+    self._ckpt_mgr = checkpoint_manager
+    self._term_overlays: ViserTermOverlays | None = None
+    self._camera_overlays: ViserCameraOverlays | None = None
+    self._debug_overlays: ViserDebugOverlays | None = None
+    self._contact_overlays: ViserContactOverlays | None = None
+    self._sim_lock = Lock()
+    self._camera_update_last_ms: float = 0.0
+    self._debug_queue_last_ms: float = 0.0
+    self._scene_submit_enqueue_last_ms: float = 0.0
+    self._scene_update_last_ms: float = 0.0
+    self._timing_last_log_time: float = 0.0
+    self._external_server = viser_server is not None
+    self._server = viser_server or viser.ViserServer(label="mjlab")
+
+  @override
+  def setup(self) -> None:
+    """Setup the viewer resources."""
+    sim = self.env.unwrapped.sim
+    assert isinstance(sim, Simulation)
+
+    self._threadpool = ThreadPoolExecutor(max_workers=1)
+    self._counter = 0
+    self._pending_update_reasons: set[UpdateReason] = set()
+
+    # Create MjlabViserScene for all 3D visualization (with debug visualization enabled).
+    self._scene = MjlabViserScene(
+      server=self._server,
+      mj_model=sim.mj_model,
+      num_envs=self.env.num_envs,
+      sim_model=sim.model,
+      expanded_fields=sim.expanded_fields,
+    )
+
+    self._scene.env_idx = self.cfg.env_idx
+    self._scene.debug_visualization_enabled = (
+      True  # Enable debug visualization by default
+    )
+
+    # Create tab group.
+    tabs = self._server.gui.add_tab_group()
+
+    # Main tab with simulation controls and display settings.
+    with tabs.add_tab("Controls", icon=viser.Icon.SETTINGS):
+      # Status display.
+      with self._server.gui.add_folder("Info"):
+        self._status_html = self._server.gui.add_html("")
+
+      # Simulation controls.
+      with self._server.gui.add_folder("Simulation"):
+        # Play/Pause button.
+        self._pause_button = self._server.gui.add_button(
+          "Play" if self._is_paused else "Pause",
+          icon=viser.Icon.PLAYER_PLAY if self._is_paused else viser.Icon.PLAYER_PAUSE,
+        )
+
+        @self._pause_button.on_click
+        def _(_) -> None:
+          self.request_toggle_pause()
+
+        # Single-step button.
+        self._step_button = self._server.gui.add_button(
+          "Step",
+          icon=viser.Icon.PLAYER_TRACK_NEXT,
+        )
+
+        @self._step_button.on_click
+        def _(_) -> None:
+          self.request_single_step()
+
+        # Reset button.
+        reset_button = self._server.gui.add_button("Reset Environment")
+
+        @reset_button.on_click
+        def _(_) -> None:
+          self.request_reset()
+
+        # Speed controls.
+        speed_buttons = self._server.gui.add_button_group(
+          "Speed",
+          options=["Slower", "1x", "Faster"],
+        )
+
+        @speed_buttons.on_click
+        def _(event) -> None:
+          if event.target.value == "Slower":
+            self.request_speed_down()
+          elif event.target.value == "1x":
+            self.request_reset_speed()
+          else:
+            self.request_speed_up()
+
+      # Let command terms create their own GUI controls.
+      env = self.env.unwrapped
+      if env.command_manager.active_terms:
+        with self._server.gui.add_folder("Commands"):
+          env.command_manager.create_gui(
+            self._server,
+            lambda: self._scene.env_idx,
+            on_change=self._scene.request_update,
+            request_action=self.request_action,
+          )
+
+      # Add standard visualization options from MjlabViserScene.
+      def _debug_viz_extra() -> None:
+        env.command_manager.create_debug_vis_gui(
+          self._server, on_change=self._scene.request_update
+        )
+        self._create_sensor_debug_vis_gui()
+        self._create_reward_debug_vis_gui()
+
+      with self._server.gui.add_folder("Scene"):
+        self._scene.create_scene_gui(
+          camera_distance=self.cfg.distance,
+          camera_azimuth=self.cfg.azimuth,
+          camera_elevation=self.cfg.elevation,
+          debug_viz_extra_gui=_debug_viz_extra,
+        )
+
+      self._camera_overlays = ViserCameraOverlays(self._server, self.env, sim.mj_model)
+      if self._camera_overlays.has_cameras:
+        with self._server.gui.add_folder("Camera Feeds"):
+          self._camera_overlays.setup_controls()
+
+    self._prev_env_idx = self._scene.env_idx
+
+    # Visualization tab (overlay controls: contacts, forces, inertia, etc.).
+    with tabs.add_tab("Visualization", icon=viser.Icon.EYE):
+      self._scene.create_overlay_gui()
+
+    self._term_overlays = ViserTermOverlays(
+      self._server, self.env, self._scene, self.frame_time
+    )
+    self._term_overlays.setup_tabs(tabs)
+    self._debug_overlays = ViserDebugOverlays(self.env, self._scene)
+    self._contact_overlays = ViserContactOverlays(self._scene)
+
+    # Groups tab (geom/site/joint/tendon/actuator visibility).
+    with tabs.add_tab("Groups", icon=viser.Icon.LAYERS_INTERSECT):
+      self._scene.create_groups_gui()
+
+    # Checkpoints tab (optional, when checkpoint_manager is provided).
+    if self._ckpt_mgr is not None:
+      is_wandb = self._ckpt_mgr.run_url is not None
+      with tabs.add_tab("Checkpoints", icon=viser.Icon.DATABASE):
+        if is_wandb:
+          url = self._ckpt_mgr.run_url
+          self._server.gui.add_html(
+            '<div style="font-size:0.85em;line-height:1.25;'
+            'padding:0 1em 0.5em 1em;">'
+            "<strong>Source:</strong> W&B<br/>"
+            f"<strong>Run:</strong>"
+            f" {self._ckpt_mgr.run_name}<br/>"
+            f"<strong>Status:</strong>"
+            f" {self._ckpt_mgr.run_status}<br/>"
+            f'<a href="{url}" target="_blank"'
+            f' style="color:#3b82f6;">'
+            f"Open in W&B</a>"
+            "</div>"
+          )
+        else:
+          self._server.gui.add_html(
+            '<div style="font-size:0.85em;line-height:1.25;'
+            'padding:0 1em 0.5em 1em;">'
+            "<strong>Source:</strong> Local"
+            "</div>"
+          )
+
+        self._ckpt_dropdown = self._server.gui.add_dropdown(
+          "Checkpoint",
+          options=[self._ckpt_mgr.current_name],
+          initial_value=self._ckpt_mgr.current_name,
+        )
+        self._ckpt_user_event = Event()
+        self._ckpt_user_event.set()
+
+        @self._ckpt_dropdown.on_update
+        def _(_) -> None:
+          if self._ckpt_user_event.is_set():
+            self._actions.append((ViewerAction.FETCH_CHECKPOINT, "selected"))
+
+        ckpt_buttons = self._server.gui.add_button_group(
+          "",
+          options=["Sync", "Use Latest"],
+        )
+
+        @ckpt_buttons.on_click
+        def _(event) -> None:
+          if event.target.value == "Sync":
+            self._actions.append((ViewerAction.FETCH_CHECKPOINT, "refresh"))
+          else:
+            self._actions.append((ViewerAction.FETCH_CHECKPOINT, "latest"))
+
+      # Populate the dropdown on startup.
+      self._actions.append((ViewerAction.FETCH_CHECKPOINT, "refresh"))
+
+  @override
+  def _handle_custom_action(
+    self,
+    action: ViewerAction,
+    payload: Optional[Any],
+  ) -> bool:
+    if isinstance(payload, dict) and payload.get("type") == "gui_reset":
+      self._handle_gui_reset(payload.get("all_envs", False))
+      return True
+    if action != ViewerAction.FETCH_CHECKPOINT:
+      return False
+    if self._ckpt_mgr is None:
+      return True
+
+    if payload in ("refresh", "latest"):
+      entries = self._ckpt_mgr.fetch_available()
+      labels = [f"{n}  ({t})" if t else n for n, t in entries]
+      self._ckpt_user_event.clear()
+      self._ckpt_dropdown.options = labels
+      cur = next(
+        (lbl for lbl in labels if lbl.startswith(self._ckpt_mgr.current_name)),
+        self._ckpt_mgr.current_name,
+      )
+      self._ckpt_dropdown.value = cur
+      self._ckpt_user_event.set()
+      if payload == "refresh" or not entries:
+        return True
+      # "latest" -- select the last entry.
+      name = entries[-1][0]
+    else:
+      # "selected" -- extract name from dropdown label.
+      name = self._ckpt_dropdown.value.split("  (")[0]
+
+    if name != self._ckpt_mgr.current_name:
+      print(f"[INFO]: Loading {name}...")
+      self.policy = self._ckpt_mgr.load_checkpoint(name)
+      self._ckpt_mgr.current_name = name
+      self._ckpt_updating = True
+      cur = next(
+        (lbl for lbl in self._ckpt_dropdown.options if lbl.startswith(name)),
+        name,
+      )
+      self._ckpt_dropdown.value = cur
+      self._ckpt_user_event.set()
+      self.reset_environment()
+      print(f"[INFO]: Loaded {name}")
+    return True
+
+  def _handle_gui_reset(self, all_envs: bool) -> None:
+    """Reset environment(s) and apply GUI-selected command state."""
+    env = self.env.unwrapped
+    if all_envs:
+      env_ids = torch.arange(env.num_envs, dtype=torch.int64, device=env.device)
+    else:
+      env_ids = torch.tensor(
+        [self._scene.env_idx], dtype=torch.int64, device=env.device
+      )
+
+    with self._sim_lock:
+      env.reset(env_ids=env_ids)
+      if env.command_manager.apply_gui_reset(env_ids):
+        env.scene.write_data_to_sim()
+        env.sim.forward()
+        env.sim.sense()
+
+    self._pending_update_reasons.add(UpdateReason.ACTION)
+    self._sync_ui_state()
+
+  @override
+  def _process_actions(self) -> None:
+    """Process queued actions and sync UI state."""
+    had_actions = bool(self._actions)
+    super()._process_actions()
+    if had_actions:
+      self._pending_update_reasons.add(UpdateReason.ACTION)
+      self._sync_ui_state()
+
+  def _sync_ui_state(self) -> None:
+    """Sync UI elements to current state after action processing."""
+    self._pause_button.label = "Play" if self._is_paused else "Pause"
+    self._pause_button.icon = (
+      viser.Icon.PLAYER_PLAY if self._is_paused else viser.Icon.PLAYER_PAUSE
+    )
+    self._update_status_display()
+    self.env.unwrapped.command_manager.on_viewer_pause(self._is_paused)
+
+  def _update_env_dependent_plots(self) -> None:
+    """Refresh reward/metric plots and histories for the selected environment."""
+    if self._scene.env_idx != self._prev_env_idx:
+      self._prev_env_idx = self._scene.env_idx
+      self._pending_update_reasons.add(UpdateReason.ENV_SWITCH)
+      if self._term_overlays:
+        self._term_overlays.on_env_switch()
+      if self._debug_overlays:
+        self._debug_overlays.on_env_switch()
+      if self._contact_overlays:
+        self._contact_overlays.on_env_switch()
+
+    if self._term_overlays:
+      self._term_overlays.update(self._is_paused)
+
+  def _update_camera_feeds(self, sim: Simulation, has_pending_updates: bool) -> None:
+    """Push camera sensor frames to GUI when needed."""
+    t0 = time.perf_counter()
+    if self._camera_overlays and self._should_update_cameras(
+      self._is_paused, has_pending_updates
+    ):
+      self._camera_overlays.update(
+        sim.data, self._scene.env_idx, self._scene._scene_offset
+      )
+    self._camera_update_last_ms = (time.perf_counter() - t0) * 1000.0
+
+  def _create_sensor_debug_vis_gui(self) -> None:
+    """Add per-sensor debug visualization checkboxes."""
+    env = self.env.unwrapped
+    vis_sensors = [
+      s
+      for s in env.scene.sensors.values()
+      if isinstance(s, RayCastSensor) and s.cfg.debug_vis
+    ]
+    if not vis_sensors:
+      return
+    for sensor in vis_sensors:
+      cb = self._server.gui.add_checkbox(
+        sensor.cfg.name,
+        initial_value=sensor._debug_vis_enabled,
+      )
+
+      def _on_update(_ev, _s=sensor, _cb=cb) -> None:
+        _s._debug_vis_enabled = _cb.value
+        self._scene.needs_update = True
+
+      cb.on_update(_on_update)
+
+  def _create_reward_debug_vis_gui(self) -> None:
+    """Add per-reward debug visualization checkboxes."""
+    env = self.env.unwrapped
+    for name, func in env.reward_manager.get_visualizable_terms():
+      cb = self._server.gui.add_checkbox(
+        name,
+        initial_value=func._debug_vis_enabled,
+      )
+
+      def _on_update(_ev, _f=func, _cb=cb) -> None:
+        _f._debug_vis_enabled = _cb.value
+        self._scene.request_update()
+
+      cb.on_update(_on_update)
+
+  def _queue_debug_visualizers(self) -> None:
+    """Queue environment-specific debug draw calls into the scene.
+
+    Acquires ``_sim_lock`` so the clear+requeue is atomic with respect
+    to the background thread that reads the queues in ``scene.update``.
+    """
+    t0 = time.perf_counter()
+    if self._debug_overlays:
+      with self._sim_lock:
+        self._debug_overlays.queue()
+    self._debug_queue_last_ms = (time.perf_counter() - t0) * 1000.0
+
+  def _submit_scene_update_if_needed(
+    self, sim: Simulation, has_pending_updates: bool
+  ) -> None:
+    """Submit a scene sync job when the update policy allows it."""
+    t_enqueue_start = time.perf_counter()
+    if self._scene.needs_update:
+      self._pending_update_reasons.add(UpdateReason.SCENE_REQUEST)
+
+    if not self._should_submit_scene_update(
+      self._counter, self._is_paused, has_pending_updates
+    ):
+      self._scene_submit_enqueue_last_ms = 0.0
+      return
+
+    def update_scene() -> None:
+      with self._sim_lock:
+        t0 = time.perf_counter()
+        with self._server.atomic():
+          self._scene.update(sim.data)
+          self._server.flush()
+        self._scene_update_last_ms = (time.perf_counter() - t0) * 1000.0
+
+    self._threadpool.submit(update_scene)
+    self._scene_submit_enqueue_last_ms = (
+      time.perf_counter() - t_enqueue_start
+    ) * 1000.0
+    self._pending_update_reasons.clear()
+    self._scene.needs_update = False
+
+  def _maybe_log_debug_timings(self) -> None:
+    """Log lightweight Viser pipeline timing in debug mode."""
+    if self.verbosity < VerbosityLevel.DEBUG:
+      return
+    now = time.time()
+    if now - self._timing_last_log_time < 1.0:
+      return
+    self._timing_last_log_time = now
+    self.log(
+      (
+        "[DEBUG] Viser timings: "
+        f"camera={self._camera_update_last_ms:.2f}ms, "
+        f"debug={self._debug_queue_last_ms:.2f}ms, "
+        f"submit_enqueue={self._scene_submit_enqueue_last_ms:.2f}ms, "
+        f"scene_update={self._scene_update_last_ms:.2f}ms"
+      ),
+      VerbosityLevel.DEBUG,
+    )
+
+  @staticmethod
+  def _should_update_cameras(paused: bool, has_pending_updates: bool) -> bool:
+    """Camera feeds update continuously while running and on-demand while paused."""
+    return (not paused) or has_pending_updates
+
+  @staticmethod
+  def _should_submit_scene_update(
+    counter: int, paused: bool, has_pending_updates: bool
+  ) -> bool:
+    """Scene submits at 30Hz (every other 60Hz tick) with pause-aware gating."""
+    if counter % 2 != 0:
+      return False
+    if paused and not has_pending_updates:
+      return False
+    return True
+
+  @override
+  def sync_env_to_viewer(self) -> None:
+    """Synchronize environment state to viewer."""
+    sim = self.env.unwrapped.sim
+    assert isinstance(sim, Simulation)
+    self._scene.paused = self._is_paused
+    self._counter += 1
+    if self._counter % 10 == 0:
+      self._update_status_display()
+    self._update_env_dependent_plots()
+    has_pending_updates = bool(self._pending_update_reasons) or self._scene.needs_update
+    self._update_camera_feeds(sim, has_pending_updates)
+    # Queue debug visualizers only when a scene update will actually be
+    # submitted.  Clearing the queues on skipped ticks creates a race
+    # with the background thread that causes debug overlays to blink.
+    will_submit = self._should_submit_scene_update(
+      self._counter, self._is_paused, has_pending_updates
+    )
+    if will_submit:
+      self._queue_debug_visualizers()
+    self._submit_scene_update_if_needed(sim, has_pending_updates)
+    self._maybe_log_debug_timings()
+
+  @override
+  def sync_viewer_to_env(self) -> None:
+    """Synchronize viewer state to environment (e.g., perturbations)."""
+    pass
+
+  @override
+  def reset_environment(self) -> None:
+    """Extend BaseViewer.reset_environment to clear reward and metrics histories."""
+    with self._sim_lock:
+      super().reset_environment()
+    if self._term_overlays:
+      self._term_overlays.clear_histories()
+
+  @override
+  def close(self) -> None:
+    """Close the viewer and cleanup resources."""
+    if self._term_overlays:
+      self._term_overlays.cleanup()
+    if self._camera_overlays:
+      self._camera_overlays.cleanup()
+    self._threadpool.shutdown(wait=True)
+    if not self._external_server:
+      self._server.stop()
+
+  @override
+  def is_running(self) -> bool:
+    """Check if viewer is running."""
+    return True  # Viser runs until process is killed.
+
+  def _update_status_display(self) -> None:
+    """Update the HTML status display."""
+    status = self.get_status()
+    actual_rt = status.actual_realtime
+    rt_display = f"{actual_rt:.2f}x" if actual_rt > 0 else "—"
+    capped = ' <span style="color:#e74c3c;">[CAPPED]</span>' if status.capped else ""
+    error_line = ""
+    if status.last_error:
+      # Show last line of traceback to avoid flooding the panel.
+      first_line = status.last_error.strip().splitlines()[-1]
+      error_line = (
+        f'<br/><span style="color:#e74c3c;"><strong>Error:</strong> {first_line}</span>'
+      )
+    self._status_html.content = f"""
+      <div style="font-size: 0.85em; line-height: 1.25; padding: 0 1em 0.5em 1em;">
+        <strong>Status:</strong> {"Paused" if status.paused else "Running"}{capped}<br/>
+        <strong>Steps:</strong> {status.step_count}<br/>
+        <strong>Speed:</strong> {status.speed_label}<br/>
+        <strong>Target RT:</strong> {status.target_realtime:.2f}x<br/>
+        <strong>Actual RT:</strong> {rt_display} ({status.smoothed_fps:.0f} FPS){error_line}
+      </div>
+      """

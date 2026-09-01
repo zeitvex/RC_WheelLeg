@@ -1,0 +1,14 @@
+build/
+install/
+log/
+logs_v2_web/
+map/load/
+src/odin_ros_driver/log/
+src/odin_ros_driver/recorddata/
+src/odin_ros_driver/image/
+*.bak_*
+__pycache__/
+*.py[cod]
+.colcon/
+.vscode/
+compile_commands.json
