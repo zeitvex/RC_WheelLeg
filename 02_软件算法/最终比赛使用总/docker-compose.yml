@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  sim2real_ros2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sim2real_ros2_node
+    runtime: nvidia
+    network_mode: host
+    privileged: true
+    stdin_open: true
+    tty: true
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    cap_add:
+      - SYS_NICE
+    shm_size: '2gb'
+    volumes:
+      - /dev:/dev
+    restart: unless-stopped

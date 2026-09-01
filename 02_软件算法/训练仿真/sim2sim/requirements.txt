@@ -1,0 +1,3 @@
+# Additional runtime dependencies for the post-training Sim2Sim tools.
+onnxruntime>=1.19.0
+pygame>=2.6.1

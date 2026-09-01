@@ -1,0 +1,34 @@
+# Large runtime directories
+.venv/
+logs/
+wandb/
+artifacts/
+benchmark_results/
+dist/
+
+# Build/cache
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+.uv-cache/
+*.egg-info/
+
+# Git/CI
+.git/
+.github/
+.gitignore
+.pre-commit-config.yaml
+
+# IDE/local
+.vscode/
+.claude/
+notebooks/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Docs build artifacts
+docs/source/_build/
+docs/source/generated/

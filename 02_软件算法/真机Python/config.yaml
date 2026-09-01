@@ -1,0 +1,74 @@
+can1_port: "/dev/can1"
+can2_port: "/dev/can2"
+motor_model: "rs-02"
+debug: false
+
+control_freq: 50
+imu_lib_path: null
+
+controller:
+  kp_leg: 80.0
+  kd_leg: 2.5
+  kd_wheel: 2.0
+  max_vx: 0.8
+  max_vy: 0.3
+  max_yaw_rate: 0.5
+
+policy:
+  enable_zero_cmd_suppression: true
+  hold_zero_command_pose: true
+  command_release_s: 0.35
+  require_active_command_to_release: true
+  zero_cmd_use_yaw_rate: false
+  action_scale: [0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 0.125, 0.25, 0.25, 5.0, 5.0, 5.0, 5.0]
+  release_command_hold_s: 0.12
+  release_posture_max_err: 0.35
+  release_target_blend_s: 0.30
+
+stand_balance:
+  enabled: true
+  height: 0.33
+  kp_roll: 0.85
+  kp_pitch: 0.70
+  kd_roll_rate: 0.03
+  kd_pitch_rate: 0.025
+  lateral_lean_gain: 0.0
+  hip_abduction_clip: 0.45
+  hip_pitch_clip: [-1.0, 2.5]
+  knee_clip: [-2.6, -0.3]
+  stable_roll_deg: 6.0
+  stable_pitch_deg: 8.0
+  stable_gyro_deg_s: 45.0
+  enter_hold_s: 1.0
+  profile_h: [0.157, 0.248, 0.311, 0.366, 0.411, 0.448]
+  profile_hip: [1.5, 1.2, 1.0, 0.8, 0.6, 0.4]
+  profile_knee: [-2.5, -2.1, -1.8, -1.5, -1.2, -0.9]
+
+startup:
+  enabled: true
+  wait_for_enter_before_rise: false
+  soft_hold_duration: 1.0
+  ramp_kp_time: 1.0
+  transition_time_min: 2.0
+  transition_time_max: 6.0
+  transition_seconds_per_rad: 1.5
+  timeout_extra: 3.0
+  hold_time: 1.0
+  settle_pos_threshold: 0.30
+  settle_vel_threshold: 0.6
+  progress_log_interval: 0.5
+  max_dev_warn: 1.5
+  max_dev_abort: 3.0
+  require_user_confirm: true
+
+safety:
+  enabled: true
+  max_target_offset: 0.6
+  max_ang_vel: 10.0
+  max_tilt_z: -0.3
+  clip_to_brake: 3
+  imu_age_warn_ms: 60.0
+  imu_age_stop_ms: 200.0
+
+log_dir: "logs"
+log_every: 1

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robot"
+version = "0.1.0"
+description = "mjlab RL tasks for the wheeled-legged robot"
+requires-python = ">=3.10"
+dependencies = [
+    "mjlab[cu128]>=1.0.0",
+    "pynput>=1.8.2",
+]
+
+[project.optional-dependencies]
+cu128 = ["torch"]
+
+[project.entry-points."mjlab.tasks"]
+robot = "robot"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv]
+override-dependencies = ["mujoco>=3.8.0.dev0"]
+
+[[tool.uv.index]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com/"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "mujoco"
+url = "https://py.mujoco.org"
+explicit = true
+
+[tool.uv.sources]
+warp-lang = { index = "nvidia", marker = "sys_platform != 'darwin'" }
+torch = [
+  { index = "pytorch-cu128", extra = "cu128", marker = "sys_platform != 'darwin'" },
+]
+mujoco = { index = "mujoco" }
+mjlab = { path = "mjlab", editable = true }

@@ -1,0 +1,16 @@
+frame_id: map
+goals:
+  dock:
+    position: [0.0, 0.0, 0.0]
+    yaw_deg: 0.0
+    description: "dock"
+
+  test_p1:
+    position: [4.73, 1.75, 0.0]
+    yaw_deg: 0.0
+    description: "test point 1"
+
+  test_p2:
+    position: [4.94, 0.40, 0.0]
+    yaw_deg: 0.0
+    description: "test point 2"
