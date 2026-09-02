@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sim2real_bringup</name>
+  <version>0.1.0</version>
+  <description>Launch and configuration package for sim2real_ros2.</description>
+  <maintainer email="todo@example.com">todo</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>sim2real_common</exec_depend>
+  <exec_depend>sim2real_hw</exec_depend>
+  <exec_depend>sim2real_interfaces</exec_depend>
+  <exec_depend>sim2real_runtime</exec_depend>
+  <exec_depend>sim2real_nav2</exec_depend>
+  <exec_depend>odin_ros_driver</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

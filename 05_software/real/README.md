@@ -32,6 +32,12 @@ ROS 2/C++ Sim2Real 初版，将策略热路径迁移为 50 Hz C++ 推理和 200 
 
 原始快照没有随工程保存 Odin ROS 2 驱动源码，该依赖边界见 [`sim2real_ros2/README.md`](sim2real_ros2/README.md)。
 
+## `sim2real_ros2_v2`
+
+ROS 2 Sim2Real v2 导航原型，在初版基础上增加简单导航节点、PCD 交互定位、任务点/任务序列和 Web 导航调试。该版本对应重排主线的 `v0.11.0`。
+
+本阶段的两份大体积 PCD 已确定性抽样，Odin 驱动仍为外部依赖；详细边界见 [`sim2real_ros2_v2/README.md`](sim2real_ros2_v2/README.md)。
+
 ## 实机记录
 
 [![第一代 Sim2Real 真机验证](../../06_assets/images/early_sim2real_preview.jpg)](../../06_assets/videos/early_sim2real.mp4)

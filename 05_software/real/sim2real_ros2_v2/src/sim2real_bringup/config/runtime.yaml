@@ -1,0 +1,101 @@
+/**:
+  ros__parameters:
+    policy_hz: 50.0
+    motor_hz: 200.0
+    status_hz: 10.0
+    target_timeout_ms: 150.0
+    model_path: policies/model_rough.onnx
+    use_cuda: true  # 启用 CUDA Execution Provider（Orin Nano GPU 加速）
+    contract_file: deployment_contract.yaml
+    dry_run: false
+    can0_name: "can0"
+    can1_name: "can1"
+    imu_topic: "/odin1/imu"
+    odom_topic: "/odom"
+    
+    # Remote UART / SBUS parameters, aligned with the Python deployment
+    remote_enabled: true
+    remote_port: "/dev/ttyACM0"
+    remote_baudrate: 100000
+    remote_timeout: 0.02
+    remote_axis_deadzone: 40
+    remote_active_threshold: 40
+    remote_axis_full_scale: 660.0
+    remote_max_vx: 0.8
+    remote_max_vy: 0.3
+    remote_max_yaw_rate: 0.5
+    remote_invert_vx: true
+    remote_invert_vy: false
+    remote_invert_yaw: true
+    remote_publish_inactive_zero: true
+    remote_estop_latch: true
+    remote_poll_hz: 50.0
+
+    # Command mux parameters
+    cmd_mux_default_mode: "NAV"
+    cmd_mux_output_hz: 50.0
+    cmd_mux_remote_timeout_ms: 250.0
+    cmd_mux_web_timeout_ms: 300.0
+    cmd_mux_nav_timeout_ms: 500.0
+    cmd_mux_max_vx: 0.8
+    cmd_mux_max_vy: 0.3
+    cmd_mux_max_yaw_rate: 0.5
+    cmd_mux_max_vx_acc: 1.0
+    cmd_mux_max_vy_acc: 1.0
+    cmd_mux_max_yaw_acc: 1.5
+
+    # Windows/Nano Web UDP bridge parameters
+    web_bridge_enabled: true
+    web_http_host: "0.0.0.0"
+    web_http_port: 18080
+    web_static_dir: "tools/win_web_debug/static"
+    web_udp_listen_host: "0.0.0.0"
+    web_udp_listen_port: 15000
+    web_udp_remote_host: ""
+    web_udp_remote_port: 15001
+    web_udp_state_hz: 20.0
+    web_udp_cmd_timeout_ms: 300.0
+    web_udp_max_packet_bytes: 8192
+    web_udp_max_vx: 0.8
+    web_udp_max_vy: 0.3
+    web_udp_max_yaw_rate: 0.5
+    web_udp_estop_on_timeout: false
+    
+    # Safety parameters
+    safety_enabled: true
+    max_target_offset: 0.6
+    hard_target_offset: 2.0
+    max_ang_vel: 10.0
+    max_tilt_z: -0.3
+    clip_to_brake: 0
+    imu_age_warn_ms: 60.0
+    imu_age_stop_ms: 200.0
+
+    # Policy alignment with the Python deployment
+    command_release_s: 0.35
+    release_command_hold_s: 0.12
+    release_posture_max_err: 0.35
+    release_target_blend_s: 0.30
+    clip_obs: 100.0
+    hold_zero_command_pose: true
+    enable_zero_cmd_suppression: true
+    require_active_command_to_release: true
+    zero_cmd_use_yaw_rate: true
+
+    # Simple navigation parameters
+    nav_map_frame: "map"
+    nav_base_frame: "base_link"
+    nav_control_hz: 20.0
+    nav_goal_tolerance: 0.20
+    nav_yaw_stop_threshold: 0.80
+    nav_max_vx: 0.45
+    nav_max_wz: 0.80
+    nav_kp_dist: 0.80
+    nav_kp_yaw: 1.80
+    nav_goals_file: src/sim2real_nav2/config/maps/factory_a/goals.yaml
+    nav_missions_file: src/sim2real_nav2/config/maps/factory_a/missions.yaml
+    pcd_nav_file: map/map1.pcd
+    pcd_floor_z_min: -1.6
+    pcd_floor_z_max: 0.4
+    pcd_sample_step: 25
+    pcd_robot_radius: 0.18

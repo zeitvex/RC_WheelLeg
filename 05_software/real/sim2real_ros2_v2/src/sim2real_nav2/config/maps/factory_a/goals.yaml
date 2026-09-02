@@ -1,0 +1,16 @@
+frame_id: map
+goals:
+  dock:
+    position: [0.0, 0.0, 0.0]
+    yaw_deg: 0.0
+    description: "起始点/回充点"
+
+  test_p1:
+    position: [1.5, 0.0, 0.0]
+    yaw_deg: 0.0
+    description: "测试点1"
+
+  test_p2:
+    position: [1.5, -1.0, 0.0]
+    yaw_deg: -90.0
+    description: "测试点2"

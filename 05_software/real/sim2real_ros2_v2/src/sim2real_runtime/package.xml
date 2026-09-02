@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sim2real_runtime</name>
+  <version>0.1.0</version>
+  <description>Policy runtime node for sim2real_ros2.</description>
+  <maintainer email="todo@example.com">todo</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>sim2real_common</depend>
+  <depend>sim2real_interfaces</depend>
+  <exec_depend>python3-matplotlib</exec_depend>
+  <exec_depend>python3-serial</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

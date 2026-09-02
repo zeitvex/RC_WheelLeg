@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>sim2real ROS2 控制台</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="glass-panel top-bar">
+    <div class="top-bar-left">
+      <h1>sim2real ROS2</h1>
+      <span class="stage" id="stage">DISCONNECTED</span>
+    </div>
+    <div class="top-bar-center">
+      <span class="label">控制模式</span>
+      <button class="btn" id="btn-disabled">DISABLED</button>
+      <button class="btn btn-remote" id="btn-remote">REMOTE</button>
+      <button class="btn btn-web" id="btn-web">WEB</button>
+      <button class="btn btn-nav" id="btn-nav">NAV</button>
+      <div class="divider"></div>
+      <button class="btn" id="btn-zero">速度归零</button>
+    </div>
+    <div class="top-bar-right">
+      <button class="btn btn-danger" id="btn-estop">软急停</button>
+    </div>
+  </header>
+
+  <div class="glass-panel side-panel left-panel">
+    <div class="panel-section">
+      <h2 class="panel-title">运行状态</h2>
+      <div class="diag-row"><span class="diag-label">target_source</span><span class="diag-value" id="d-source">--</span></div>
+      <div class="diag-row"><span class="diag-label">runtime_released</span><span class="diag-value" id="d-released">--</span></div>
+      <div class="diag-row"><span class="diag-label">release_alpha</span><span class="diag-value" id="d-alpha">--</span></div>
+      <div class="diag-row"><span class="diag-label">zero_command</span><span class="diag-value" id="d-zero">--</span></div>
+      <div class="diag-row"><span class="diag-label">estop</span><span class="diag-value" id="d-estop">--</span></div>
+      <div class="diag-row"><span class="diag-label">mux</span><span class="diag-value" id="d-mux">--</span></div>
+    </div>
+
+    <div class="panel-section">
+      <h2 class="panel-title">IMU &amp; 里程计</h2>
+      <div class="diag-row"><span class="diag-label">IMU fresh</span><span class="diag-value" id="d-imu-fresh">--</span></div>
+      <div class="diag-row"><span class="diag-label">IMU age ms</span><span class="diag-value" id="d-imu-age">--</span></div>
+      <div class="diag-row"><span class="diag-label">projected_gravity</span><span class="diag-value" id="d-gravity">--</span></div>
+      <div class="diag-row"><span class="diag-label">holdover</span><span class="diag-value" id="d-holdover">--</span></div>
+      <div class="diag-row"><span class="diag-label">odom age ms</span><span class="diag-value" id="d-odom-age">--</span></div>
+      <div class="diag-row"><span class="diag-label">odom local pos</span><span class="diag-value" id="d-odom-pos">--</span></div>
+      <div class="diag-row"><span class="diag-label">nav pose</span><span class="diag-value" id="d-nav-pose">--</span></div>
+      <div class="diag-row"><span class="diag-label">nav status</span><span class="diag-value" id="d-nav-status">--</span></div>
+    </div>
+
+    <div class="panel-section flex-1">
+      <h2 class="panel-title">关节状态 (16轴)</h2>
+      <div id="joints-grid" class="motors-grid-list"></div>
+    </div>
+  </div>
+
+  <main class="glass-panel center-panel">
+    <div class="panel-section map-section">
+      <div class="map-header">
+        <h2 class="panel-title">PCD 2D 导航</h2>
+        <div class="map-actions">
+          <button class="btn" id="btn-refresh-map">刷新地图</button>
+          <button class="btn" id="btn-record">记录当前位置</button>
+          <button class="btn" id="btn-stop-nav">停止导航</button>
+          <button class="btn" id="btn-go-rel">前进 0.3m</button>
+        </div>
+      </div>
+      <canvas id="map-canvas" width="900" height="680"></canvas>
+      <div class="map-help">左键点击地图发送绝对目标；蓝点是当前机器人，红叉是最近目标。</div>
+    </div>
+  </main>
+
+  <div class="glass-panel side-panel right-panel">
+    <div class="panel-section">
+      <h2 class="panel-title">Web 手动控制</h2>
+      <div class="joystick-area">
+        <div class="joystick" id="joystick"><div id="stick"></div></div>
+        <p class="hint">拖动控制前后(vx)和横移(vy)，松开归零</p>
+      </div>
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">vx</span>
+          <input type="range" id="cmd-vx" class="glass-slider" min="-0.8" max="0.8" step="0.01" value="0">
+          <span class="slider-val" id="cmd-vx-v">0.00</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">vy</span>
+          <input type="range" id="cmd-vy" class="glass-slider" min="-0.3" max="0.3" step="0.01" value="0">
+          <span class="slider-val" id="cmd-vy-v">0.00</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">yaw</span>
+          <input type="range" id="cmd-yaw" class="glass-slider" min="-0.5" max="0.5" step="0.01" value="0">
+          <span class="slider-val" id="cmd-yaw-v">0.00</span>
+        </div>
+      </div>
+      <div class="cmd-display" id="cmd-display">vx=0.00 vy=0.00 yaw=0.00</div>
+    </div>
+
+    <div class="panel-section">
+      <h2 class="panel-title">当前输出 /cmd_vel</h2>
+      <div class="diag-row"><span class="diag-label">linear.x</span><span class="diag-value" id="cv-vx">--</span></div>
+      <div class="diag-row"><span class="diag-label">linear.y</span><span class="diag-value" id="cv-vy">--</span></div>
+      <div class="diag-row"><span class="diag-label">angular.z</span><span class="diag-value" id="cv-yaw">--</span></div>
+    </div>
+
+    <div class="panel-section log-section flex-1">
+      <h2 class="panel-title">事件流</h2>
+      <div id="events-log" class="log"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+missions:
+  test_roundtrip:
+    description: "测试点1到点2再回起点"
+    loop: false
+    goals:
+      - dock
+      - test_p1
+      - test_p2
+      - dock
