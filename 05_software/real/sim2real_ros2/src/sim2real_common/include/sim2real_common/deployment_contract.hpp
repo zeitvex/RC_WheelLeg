@@ -19,8 +19,8 @@ struct DeploymentContract
   static constexpr std::array<int, 4> kWheelIndices = {12, 13, 14, 15};
   static constexpr float kLegKp = 50.0f;
   static constexpr float kLegKd = 1.5f;
-  static constexpr float kLegHoldKp = kLegKp;
-  static constexpr float kLegHoldKd = kLegKd;
+  static constexpr float kLegHoldKp = 80.0f;
+  static constexpr float kLegHoldKd = 4.0f;
   static constexpr float kWheelKd = 1.0f;
 
   static constexpr std::array<int, 16> kCanBusMap = {
@@ -64,10 +64,10 @@ struct DeploymentContract
   };
 
   static constexpr std::array<float, 16> kDefaultDofPos = {
-    0.0f, 0.550f, -1.125f,
-    0.0f, 0.550f, -1.125f,
-    0.0f, 0.550f, -1.125f,
-    0.0f, 0.550f, -1.125f,
+    0.0f, 0.9f, -1.8f,
+    0.0f, 0.9f, -1.8f,
+    0.0f, 0.9f, -1.8f,
+    0.0f, 0.9f, -1.8f,
     0.0f, 0.0f, 0.0f, 0.0f
   };
 };

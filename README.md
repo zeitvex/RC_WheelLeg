@@ -1,4 +1,4 @@
-﻿# RC_WheelLeg
+# RC_WheelLeg
 
 山东华宇工学院 HYNova 战队轮足机器人项目的开源仓库。
 
@@ -22,8 +22,8 @@
 * 构型：4 条轮腿，每条腿 3 个腿部关节和 1 个驱动轮
 * 执行器：共 16 个执行器（RS02）
 * 控制路线：强化学习训练、MuJoCo 仿真、Sim2Sim 验证、Python Sim2Real 与 ROS 2/C++ 真机部署
-* 当前状态：最终比赛 ROS 2 实机工程已发布，剩余部分仍在加急整理ing
-* 当前版本：`v0.3.8` 最终比赛 ROS 2 实机工程；
+* 当前状态：Python Sim2Real v2 与 ROS 2/C++ Sim2Real 初版已整理，剩余比赛最终版本仍在持续补充
+* 当前版本：`v0.4.0` 整理 ROS 2/C++ Sim2Real 初版；
 * 硬件、固件、BOM、装配和比赛最终版本仍在持续补充
 
 ## 开源内容
@@ -45,7 +45,8 @@
 * 后期 Sim2Sim 工具、导航地图与打点工具、路线数据和抽样 PCD，位于 `05_software/train/rc_mjlab/`。
 * IK 轨迹与早期真机控制探索，位于 `05_software/real/ik_real/`。
 * 新一代 Python Sim2Real 部署栈，包含策略运行时、电机映射、IMU 接入、站立初始化、安全检查、Web 调试和标定工具。
-* 最终比赛 ROS 2/C++ Sim2Real 工程，包含策略运行时、CAN 电机热路径、Odin 接入、导航路线、触控屏 UI、Docker 和部署说明，位于 `05_software/real/sim2real_ros2/`。
+* Python Sim2Real v2 部署栈，补充电机反馈新鲜度、Odin odom 诊断、命令平滑、Web 运行时诊断和安全监控工具，位于 `05_software/real/sim2real_v2/`。
+* ROS 2/C++ Sim2Real 初版工程，将策略热路径迁移到 50 Hz C++ 推理和 200 Hz CAN 电机循环，并加入 ROS 2 消息、命令仲裁、Nav2 和统一启动结构，位于 `05_software/real/sim2real_ros2/`。
 * 新一代 Sim2Real 真机验证视频与预览图。
 
 ### 后续整理内容
@@ -122,6 +123,7 @@ RC_WheelLeg/
 * [`05_software/train/rc_mjlab/tools/nav_tools/README.md`](05_software/train/rc_mjlab/tools/nav_tools/README.md)
 * [`05_software/real/README.md`](05_software/real/README.md)
 * [`05_software/real/sim2real/README.md`](05_software/real/sim2real/README.md)
+* [`05_software/real/sim2real_v2/README.md`](05_software/real/sim2real_v2/README.md)
 * [`05_software/real/sim2real_ros2/README.md`](05_software/real/sim2real_ros2/README.md)
 
 媒体资料：
@@ -143,9 +145,9 @@ MJCF + mjlab task
         |
         +----> Sim2Sim 策略验证
         |
-        +----> Python Sim2Real ----> 电机 / IMU
+        +----> Python Sim2Real / v2 ----> 电机 / IMU
         |
-        +----> ROS 2/C++ Sim2Real -> CAN / Odin / 导航 / 屏幕
+        +----> ROS 2/C++ Sim2Real -> CAN / IMU / 导航
 
 IK real --------------------------------> 电机
 ```
@@ -154,7 +156,9 @@ IK real --------------------------------> 电机
 
 `sim2real` 当前部署 `53D -> 16D` 策略模型，控制频率为 50Hz，包含站立初始化、站立平衡、运行时安全检查、零命令保持和首次命令平滑释放逻辑。部署前应先阅读 `05_software/real/sim2real/README.md`、`DEPLOYMENT.md` 和 `ORIN_NANO_DEPLOYMENT.md`。
 
-`sim2real_ros2` 是 `backup-v0.9.0-ros2-final` 整理出的最终比赛 ROS 2/C++ 真机工程，包含 Rough `model_6800`、Wall `model_84`、Crawl IK、Odin IMU/里程计接入、简单导航、命令仲裁、触控屏 UI、比赛路线、抽样 PCD、Docker 和部署说明。完整入口见 `05_software/real/sim2real_ros2/README.md`。
+`sim2real_v2` 对应 Python Sim2Real v2，保留 `53D -> 16D` 策略接口，并增加电机反馈新鲜度、Odin odom 诊断、命令平滑、Web 运行时诊断和安全监控工具。部署前应先阅读 `05_software/real/sim2real_v2/README.md` 和 `DEPLOYMENT.md`。
+
+`sim2real_ros2` 是 `v0.4.0` 整理的 ROS 2/C++ Sim2Real 初版，将策略热路径迁移为 50 Hz C++ 推理与 200 Hz CAN 电机循环，并加入 ROS 2 消息、命令仲裁、Nav2 和统一启动结构。完整入口见 `05_software/real/sim2real_ros2/README.md`。
 
 
 

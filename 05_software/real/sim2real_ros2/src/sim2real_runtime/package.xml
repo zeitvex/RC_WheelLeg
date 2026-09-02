@@ -12,13 +12,10 @@
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>tf2_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>sim2real_common</depend>
   <depend>sim2real_interfaces</depend>
-  <exec_depend>python3-matplotlib</exec_depend>
   <exec_depend>python3-serial</exec_depend>
-  <exec_depend>python3-yaml</exec_depend>
   <exec_depend>rclpy</exec_depend>
 
   <export>

@@ -1,0 +1,102 @@
+model:
+  path: "policies/model_rough.onnx"
+  source_pt: "policies/model_rough.pt"
+  backend: "onnxruntime"
+  obs_dim: 53
+  action_dim: 16
+  clip_obs: 100.0
+  enable_zero_cmd_suppression: true
+
+observation:
+  terms:
+    - name: base_ang_vel
+      dim: 3
+      scale: 0.25
+    - name: projected_gravity
+      dim: 3
+    - name: command
+      dim: 3
+    - name: joint_pos_rel
+      dim: 12
+    - name: joint_vel_rel
+      dim: 12
+      scale: 0.05
+    - name: wheel_vel
+      dim: 4
+      scale: 0.05
+    - name: last_actions
+      dim: 16
+
+action:
+  joint_order:
+    - fl_hip_abduction
+    - fl_hip_pitch
+    - fl_knee
+    - fr_hip_abduction
+    - fr_hip_pitch
+    - fr_knee
+    - rl_hip_abduction
+    - rl_hip_pitch
+    - rl_knee
+    - rr_hip_abduction
+    - rr_hip_pitch
+    - rr_knee
+    - fl_wheel
+    - fr_wheel
+    - rl_wheel
+    - rr_wheel
+  wheel_indices: [12, 13, 14, 15]
+  scale:
+    - 0.125
+    - 0.25
+    - 0.25
+    - 0.125
+    - 0.25
+    - 0.25
+    - 0.125
+    - 0.25
+    - 0.25
+    - 0.125
+    - 0.25
+    - 0.25
+    - 5.0
+    - 5.0
+    - 5.0
+    - 5.0
+  default_dof_pos:
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.9
+    - -1.8
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+
+control:
+  control_freq_hz: 50
+  runtime_kp_leg: 50.0
+  runtime_kd_leg: 1.5
+  hold_kp_leg: 80.0
+  hold_kd_leg: 4.0
+  kd_wheel: 1.0
+  leg_lpf_hz: 5
+  wheel_lpf_hz: 15
+  command_filter:
+    enabled: true
+    max_vx_acc: 1.0
+    max_vy_acc: 1.0
+    max_yaw_acc: 1.5
+
+safety:
+  zero_cmd_lin_thresh: 0.05
+  zero_cmd_yaw_thresh: 0.05
+  zero_yaw_rate_thresh: 0.10

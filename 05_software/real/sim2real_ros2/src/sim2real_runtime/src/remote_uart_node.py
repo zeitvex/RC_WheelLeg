@@ -10,7 +10,7 @@ import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-from std_msgs.msg import Bool, String
+from std_msgs.msg import Bool
 
 SBUS_FRAME_SIZE = 25
 SBUS_RC_MID = 1024
@@ -23,22 +23,7 @@ SWITCH_HIGH = 1
 
 @dataclass
 class RemoteSwitchState:
-    ch5: int = SWITCH_MID
-    ch6: int = SWITCH_MID
     ch7: int = SWITCH_MID
-    ch8: int = SWITCH_MID
-    ch9: int = SWITCH_MID
-    ch10: int = SWITCH_MID
-
-    def get(self, channel: int) -> Optional[int]:
-        return {
-            5: self.ch5,
-            6: self.ch6,
-            7: self.ch7,
-            8: self.ch8,
-            9: self.ch9,
-            10: self.ch10,
-        }.get(int(channel))
 
 
 @dataclass
@@ -129,14 +114,7 @@ class SbusUartReceiver:
             ch2=self._normalize_axis(channels[1]),
             ch3=self._normalize_axis(channels[3]),
             ch4=self._normalize_axis(channels[2]),
-            switches=RemoteSwitchState(
-                ch5=self._decode_switch(channels[4]),
-                ch6=self._decode_switch(channels[5]),
-                ch7=self._decode_switch(channels[6]),
-                ch8=self._decode_switch(channels[7]),
-                ch9=self._decode_switch(channels[8]),
-                ch10=self._decode_switch(channels[9]),
-            ),
+            switches=RemoteSwitchState(ch7=self._decode_switch(channels[6])),
             frame_ok=True,
         )
         if any(abs(value) > 800 for value in (state.ch1, state.ch2, state.ch3, state.ch4)):
@@ -176,31 +154,12 @@ class RemoteUartNode(Node):
         self.publish_inactive_zero = bool(self.declare_parameter("remote_publish_inactive_zero", True).value)
         self.estop_latch = bool(self.declare_parameter("remote_estop_latch", True).value)
         self.poll_hz = float(self.declare_parameter("remote_poll_hz", 50.0).value)
-        self.default_mode = str(self.declare_parameter("cmd_mux_default_mode", "REMOTE").value).strip().upper()
-        self.model_switch_enabled = bool(self.declare_parameter("remote_model_switch_enabled", True).value)
-        self.model_switch_channel = int(self.declare_parameter("remote_model_switch_channel", 10).value)
-        self.model_switch_debounce_frames = max(int(self.declare_parameter("remote_model_switch_debounce_frames", 3).value), 1)
-        self.model_switch_rough_level = self.parse_switch_level(
-            str(self.declare_parameter("remote_model_switch_rough_level", "low").value)
-        )
-        legacy_ik_level = str(self.declare_parameter("remote_model_switch_crawl_level", "").value).strip()
-        ik_level_default = legacy_ik_level if legacy_ik_level else "high"
-        self.model_switch_ik_level = self.parse_switch_level(
-            str(self.declare_parameter("remote_model_switch_ik_level", ik_level_default).value)
-        )
 
         self.cmd_pub = self.create_publisher(Twist, "cmd_vel_remote", 10)
         self.estop_pub = self.create_publisher(Bool, "/safety/estop", 10)
-        self.model_cmd_pub = self.create_publisher(String, "runtime/model_cmd", 10)
         self.receiver: Optional[SbusUartReceiver] = None
         self.estop_published = False
         self.open_error_logged = False
-        self.remote_mode_active = self.default_mode == "REMOTE"
-        self.model_switch_candidate: Optional[int] = None
-        self.model_switch_candidate_count = 0
-        self.model_switch_stable: Optional[int] = None
-
-        self.create_subscription(String, "control/mode_state", self.on_mode_state, 10)
 
         if self.enabled:
             self.receiver = SbusUartReceiver(
@@ -254,8 +213,6 @@ class RemoteUartNode(Node):
             self.estop_pub.publish(Bool(data=False))
             self.estop_published = False
 
-        self.handle_model_switch(state)
-
         active = any(abs(value) > self.active_threshold for value in (state.ch1, state.ch2, state.ch4))
         if active or self.publish_inactive_zero:
             cmd = Twist()
@@ -267,15 +224,6 @@ class RemoteUartNode(Node):
     def publish_zero_cmd(self) -> None:
         self.cmd_pub.publish(Twist())
 
-    def on_mode_state(self, msg: String) -> None:
-        mode = str(msg.data).strip().upper()
-        remote_mode_active = mode == "REMOTE"
-        if remote_mode_active == self.remote_mode_active:
-            return
-
-        self.remote_mode_active = remote_mode_active
-        self.reset_model_switch_tracking()
-
     def axis_to_velocity(self, raw_value: int, limit: float, invert: bool) -> float:
         if abs(raw_value) <= self.active_threshold:
             return 0.0
@@ -283,53 +231,6 @@ class RemoteUartNode(Node):
         if invert:
             scaled = -scaled
         return float(scaled * limit)
-
-    @staticmethod
-    def parse_switch_level(value: str) -> int:
-        normalized = value.strip().lower()
-        if normalized == "low":
-            return SWITCH_LOW
-        if normalized == "high":
-            return SWITCH_HIGH
-        return SWITCH_MID
-
-    def handle_model_switch(self, state: RemoteControlState) -> None:
-        if not self.model_switch_enabled or not self.remote_mode_active:
-            return
-
-        switch_level = state.switches.get(self.model_switch_channel)
-        if switch_level is None:
-            return
-
-        if switch_level == self.model_switch_candidate:
-            self.model_switch_candidate_count += 1
-        else:
-            self.model_switch_candidate = switch_level
-            self.model_switch_candidate_count = 1
-
-        if self.model_switch_candidate_count < self.model_switch_debounce_frames:
-            return
-
-        if switch_level == self.model_switch_stable:
-            return
-
-        self.model_switch_stable = switch_level
-
-        if switch_level == self.model_switch_rough_level:
-            self.model_cmd_pub.publish(String(data="rough"))
-            self.get_logger().info(
-                f"Remote model switch: CH{self.model_switch_channel} -> rough"
-            )
-        elif switch_level == self.model_switch_ik_level:
-            self.model_cmd_pub.publish(String(data="ik"))
-            self.get_logger().info(
-                f"Remote model switch: CH{self.model_switch_channel} -> ik"
-            )
-
-    def reset_model_switch_tracking(self) -> None:
-        self.model_switch_candidate = None
-        self.model_switch_candidate_count = 0
-        self.model_switch_stable = None
 
 
 def main(args: Optional[list[str]] = None) -> None:

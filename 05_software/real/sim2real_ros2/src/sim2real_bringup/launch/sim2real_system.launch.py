@@ -1,7 +1,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.conditions import IfCondition
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterFile
@@ -27,7 +27,7 @@ def generate_launch_description():
     
     launch_nav2_arg = DeclareLaunchArgument(
         'launch_nav2',
-        default_value='false',
+        default_value='true',
         description='Whether to launch the Nav2 navigation stack'
     )
 
@@ -43,36 +43,6 @@ def generate_launch_description():
         description='Whether to launch the Windows/Nano UDP web debug bridge'
     )
 
-    launch_simple_nav_arg = DeclareLaunchArgument(
-        'launch_simple_nav',
-        default_value='true',
-        description='Whether to launch the simple waypoint navigation node'
-    )
-
-    localization_mode_arg = DeclareLaunchArgument(
-        'localization_mode',
-        default_value='relocal',
-        description='Localization profile: odom uses bridge fallback; relocal waits for Odin map/odom TF'
-    )
-
-    odin_config_file_arg = DeclareLaunchArgument(
-        'odin_config_file',
-        default_value=PathJoinSubstitution([
-            FindPackageShare('odin_ros_driver'),
-            'config',
-            'control_command_relocal.yaml',
-        ]),
-        description='Odin control config YAML for the selected localization profile'
-    )
-
-    event_log_dir_arg = DeclareLaunchArgument(
-        'event_log_dir',
-        default_value=PythonExpression([
-            "'logs_v2_web/run_' + __import__('datetime').datetime.now().strftime('%Y-%m-%d_%H-%M-%S_%f')[:-3]"
-        ]),
-        description='Per-run event log directory'
-    )
-
     # Include odin_ros_driver launch
     driver_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -82,10 +52,7 @@ def generate_launch_description():
                 'odin1_ros2.launch.py'
             ])
         ),
-        launch_arguments={
-            'launch_rviz': 'false',
-            'config_file': LaunchConfiguration('odin_config_file'),
-        }.items(),
+        launch_arguments={'launch_rviz': 'false'}.items(),
         condition=IfCondition(LaunchConfiguration('launch_driver'))
     )
 
@@ -106,23 +73,19 @@ def generate_launch_description():
         launch_nav2_arg,
         launch_remote_arg,
         launch_web_bridge_arg,
-        launch_simple_nav_arg,
-        localization_mode_arg,
-        odin_config_file_arg,
-        event_log_dir_arg,
         Node(
             package="sim2real_hw",
             executable="sim2real_hw_node",
             name="sim2real_hw_node",
             output="screen",
-            parameters=[runtime_params, {"event_log_dir": LaunchConfiguration("event_log_dir")}],
+            parameters=[runtime_params],
         ),
         Node(
             package="sim2real_runtime",
             executable="sim2real_runtime_node",
             name="sim2real_runtime_node",
             output="screen",
-            parameters=[runtime_params, {"event_log_dir": LaunchConfiguration("event_log_dir")}],
+            parameters=[runtime_params],
         ),
         Node(
             package="sim2real_runtime",
@@ -136,7 +99,7 @@ def generate_launch_description():
             executable="web_udp_bridge_node.py",
             name="sim2real_web_udp_bridge_node",
             output="screen",
-            parameters=[runtime_params, {"localization_mode": LaunchConfiguration("localization_mode")}],
+            parameters=[runtime_params],
             condition=IfCondition(LaunchConfiguration('launch_web_bridge')),
         ),
         Node(
@@ -146,14 +109,6 @@ def generate_launch_description():
             output="screen",
             parameters=[runtime_params],
             condition=IfCondition(LaunchConfiguration('launch_remote')),
-        ),
-        Node(
-            package="sim2real_runtime",
-            executable="simple_nav_node.py",
-            name="sim2real_simple_nav_node",
-            output="screen",
-            parameters=[runtime_params],
-            condition=IfCondition(LaunchConfiguration('launch_simple_nav')),
         ),
         Node(
             package="sim2real_runtime",
@@ -171,3 +126,4 @@ def generate_launch_description():
         driver_launch,
         nav2_launch,
     ])
+

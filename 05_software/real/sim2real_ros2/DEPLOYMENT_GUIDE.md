@@ -156,7 +156,7 @@ sudo udevadm trigger
 统一启动文件 `sim2real_system.launch.py` 支持模块化激活传感器驱动和 Nav2 导航栈：
 
 * `launch_driver`（默认：`true`）：启动 `odin_ros_driver` 节点以获取 IMU 和点云遥测。
-* `launch_nav2`（默认：`false`）：按需启动 ROS2 Navigation2；比赛默认使用 `simple_nav_node.py` 的路线跟踪。
+* `launch_nav2`（默认：`true`）：启动 ROS2 Navigation2 规划器、控制器、costmap、AMCL 和 pointcloud_to_laserscan。
 
 #### 1. 完整真实硬件闭环（默认）
 启动运动控制运行时、物理 CAN 桥接、Odin 传感器驱动和 Nav2 导航：
@@ -175,3 +175,4 @@ ros2 launch sim2real_bringup sim2real_system.launch.py dry_run:=true launch_driv
 ```bash
 ros2 launch sim2real_bringup sim2real_system.launch.py launch_driver:=false launch_nav2:=false
 ```
+

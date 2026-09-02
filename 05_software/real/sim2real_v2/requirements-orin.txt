@@ -1,0 +1,8 @@
+numpy
+PyYAML
+onnxruntime
+pyserial
+
+# Optional:
+# torch         # only needed to export/check .pt policies
+# pynput        # only needed for CLI keyboard control

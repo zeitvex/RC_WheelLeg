@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.8)
 project(sim2real_runtime)
 
 find_package(ament_cmake REQUIRED)
-find_package(CUDAToolkit QUIET)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -32,31 +31,8 @@ find_library(ONNXRUNTIME_LIBRARY NAMES onnxruntime
 
 get_filename_component(ONNXRUNTIME_LIBRARY_DIR ${ONNXRUNTIME_LIBRARY} DIRECTORY)
 
-find_path(TENSORRT_INCLUDE_DIR NvInfer.h
-  PATHS
-  /usr/include
-  /usr/include/aarch64-linux-gnu
-  /usr/local/include
-)
-
-find_library(TENSORRT_LIBRARY NAMES nvinfer
-  PATHS
-  /usr/lib
-  /usr/lib/aarch64-linux-gnu
-  /usr/lib/x86_64-linux-gnu
-  /usr/local/lib
-)
-
 if(NOT ONNXRUNTIME_INCLUDE_DIR OR NOT ONNXRUNTIME_LIBRARY)
   message(FATAL_ERROR "ONNX Runtime not found! Please install it or specify include/library paths.")
-endif()
-
-set(SIM2REAL_RUNTIME_HAS_TENSORRT FALSE)
-if(TENSORRT_INCLUDE_DIR AND TENSORRT_LIBRARY AND CUDAToolkit_FOUND)
-  set(SIM2REAL_RUNTIME_HAS_TENSORRT TRUE)
-  message(STATUS "TensorRT support enabled for sim2real_runtime")
-else()
-  message(STATUS "TensorRT support disabled for sim2real_runtime (missing TensorRT or CUDA toolkit)")
 endif()
 
 add_executable(sim2real_runtime_node
@@ -67,26 +43,10 @@ add_executable(odom_relay_node
   src/odom_relay_node.cpp
 )
 
-if(SIM2REAL_RUNTIME_HAS_TENSORRT)
-  add_executable(compare_onnx_trt
-    src/compare_onnx_trt.cpp
-  )
-endif()
-
 target_include_directories(sim2real_runtime_node PRIVATE 
   include
   ${ONNXRUNTIME_INCLUDE_DIR}
 )
-
-if(SIM2REAL_RUNTIME_HAS_TENSORRT)
-  target_include_directories(sim2real_runtime_node PRIVATE
-    ${TENSORRT_INCLUDE_DIR}
-  )
-  target_include_directories(compare_onnx_trt PRIVATE
-    ${TENSORRT_INCLUDE_DIR}
-    ${ONNXRUNTIME_INCLUDE_DIR}
-  )
-endif()
 
 target_include_directories(odom_relay_node PRIVATE include)
 
@@ -94,33 +54,12 @@ target_link_libraries(sim2real_runtime_node
   ${ONNXRUNTIME_LIBRARY}
 )
 
-if(SIM2REAL_RUNTIME_HAS_TENSORRT)
-  target_link_libraries(sim2real_runtime_node
-    ${TENSORRT_LIBRARY}
-    CUDA::cudart
-  )
-  target_link_libraries(compare_onnx_trt
-    ${ONNXRUNTIME_LIBRARY}
-    ${TENSORRT_LIBRARY}
-    CUDA::cudart
-  )
-  target_compile_definitions(sim2real_runtime_node PRIVATE
-    SIM2REAL_RUNTIME_HAS_TENSORRT=1
-  )
-  target_compile_definitions(compare_onnx_trt PRIVATE
-    SIM2REAL_RUNTIME_HAS_TENSORRT=1
-  )
-endif()
-
 set_target_properties(sim2real_runtime_node PROPERTIES
   BUILD_RPATH "${ONNXRUNTIME_LIBRARY_DIR}"
   INSTALL_RPATH "${ONNXRUNTIME_LIBRARY_DIR}"
 )
 
 target_compile_features(sim2real_runtime_node PRIVATE cxx_std_17)
-if(SIM2REAL_RUNTIME_HAS_TENSORRT)
-  target_compile_features(compare_onnx_trt PRIVATE cxx_std_17)
-endif()
 
 ament_target_dependencies(sim2real_runtime_node
   geometry_msgs
@@ -131,12 +70,6 @@ ament_target_dependencies(sim2real_runtime_node
   sim2real_common
   sim2real_interfaces
 )
-
-if(SIM2REAL_RUNTIME_HAS_TENSORRT)
-  ament_target_dependencies(compare_onnx_trt
-    sim2real_common
-  )
-endif()
 
 ament_target_dependencies(odom_relay_node
   geometry_msgs
@@ -155,26 +88,11 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-if(SIM2REAL_RUNTIME_HAS_TENSORRT)
-  install(
-    TARGETS compare_onnx_trt
-    DESTINATION lib/${PROJECT_NAME}
-  )
-endif()
-
 install(
   PROGRAMS
     src/remote_uart_node.py
     src/cmd_mux_node.py
     src/web_udp_bridge_node.py
-    src/simple_nav_node.py
-    src/pcd_nav_click_tool.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(
-  FILES
-    src/deadzone_velocity_limiter.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

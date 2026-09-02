@@ -133,7 +133,7 @@ planner_server:
     GridTransition:
       plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
-      use_astar: true
+      use_astar: false
       allow_unknown: true
 
 behavior_server:

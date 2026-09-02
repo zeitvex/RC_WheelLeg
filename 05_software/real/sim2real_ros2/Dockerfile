@@ -62,7 +62,6 @@ COPY src/sim2real_nav2 sim2real_nav2
 # 拷贝策略文件与运行脚本
 WORKDIR /sim2real_ws
 COPY policies policies
-COPY map map
 COPY start_sim2real.sh start_sim2real.sh
 RUN chmod +x start_sim2real.sh
 

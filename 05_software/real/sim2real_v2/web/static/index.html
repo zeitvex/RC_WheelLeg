@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>sim2real 控制台</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+      "three/examples/jsm/loaders/STLLoader.js": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/STLLoader.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="canvas-container">
+    <canvas id="viewer-canvas"></canvas>
+    <div id="viewer-status" class="viewer-overlay">加载中...</div>
+  </div>
+
+  <header class="glass-panel top-bar">
+    <div class="top-bar-left">
+      <h1>sim2real</h1>
+      <span class="stage" id="stage">DISCONNECTED</span>
+      <span id="busy" class="busy-indicator"></span>
+      <span id="logdir" class="logdir-indicator"></span>
+    </div>
+    <div class="top-bar-center">
+      <label class="toggle-switch">
+        <input type="checkbox" id="dry-run">
+        <span class="slider"></span>
+        <span class="label">Dry-run</span>
+      </label>
+      <button class="btn btn-primary" id="btn-connect">连接硬件</button>
+      <button class="btn btn-secondary" id="btn-disconnect">断开连接</button>
+      <div class="divider"></div>
+      <button class="btn btn-success" id="btn-enable">使能电机</button>
+      <button class="btn btn-warning" id="btn-disable">失能电机</button>
+    </div>
+    <div class="top-bar-right">
+      <button id="btn-reset-camera" class="btn btn-secondary btn-icon" title="重置视角">⟳</button>
+      <button id="btn-estop" class="btn btn-danger">急停</button>
+      <button id="btn-reset-estop" class="btn btn-secondary">解除急停</button>
+    </div>
+  </header>
+
+  <div class="glass-panel side-panel left-panel">
+    <div class="panel-section">
+      <h2 class="panel-title">控制流程</h2>
+      <div class="btn-group-vertical">
+        <button class="btn btn-action" id="btn-startup">一键起立</button>
+        <div class="runtime-group">
+          <input type="text" id="policy-path" class="glass-input" placeholder="策略路径，留空则使用默认 rough">
+          <div class="btn-row">
+            <button class="btn btn-success flex-1" id="btn-runtime-start">启动策略</button>
+            <button class="btn btn-danger flex-1" id="btn-runtime-stop">停止策略</button>
+          </div>
+          <div class="btn-row mt-2">
+            <button class="btn btn-secondary flex-1" id="btn-remote-release">放开遥控</button>
+            <button class="btn btn-secondary flex-1" id="btn-remote-reclaim">收回遥控</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section state-section">
+      <h2 class="panel-title">实时状态</h2>
+      <div id="state-summary" class="state-grid"></div>
+    </div>
+
+    <div class="panel-section flex-1">
+      <div class="panel-title-row">
+        <h2 class="panel-title">Motors / Jog Test</h2>
+        <span class="hint" style="font-size:10px; color:var(--text-tertiary)">POS | VEL | TAU | TEMP | FAULT</span>
+      </div>
+      <div class="control-row mt-2 mb-2">
+        <span class="label">Kp</span><input type="number" id="jt-kp" class="glass-input mini" value="5">
+        <span class="label">Kd</span><input type="number" id="jt-kd" class="glass-input mini" value="1">
+        <span class="label">Time</span><input type="number" id="jt-dur" class="glass-input mini" value="1.0">
+        <span class="label">Δ(rad)</span><input type="number" id="jt-delta" class="glass-input mini" value="0.1" step="0.05">
+        <span id="jt-delta-v" class="slider-val">0.10</span>
+      </div>
+      <div id="motors-grid" class="motors-grid-list"></div>
+    </div>
+  </div>
+
+  <div class="glass-panel side-panel right-panel">
+    <div class="panel-section">
+      <div class="panel-title-row">
+        <h2 class="panel-title">Diagnostics</h2>
+        <button class="btn btn-secondary" id="btn-refresh-debug">刷新</button>
+      </div>
+      <div class="diag-row"><span class="diag-label">Obs Normalization</span><span class="diag-value success" id="diag-norm">Aligned</span></div>
+      <div class="diag-row"><span class="diag-label">Control Latency</span><span class="diag-value" id="diag-latency">-- ms</span></div>
+      <div class="diag-row"><span class="diag-label">Tracking Error</span><span class="diag-value" id="diag-track-err">-- rad</span></div>
+      <div class="diag-row"><span class="diag-label">Runtime</span><span class="diag-value" id="diag-runtime">--</span></div>
+      <div class="diag-row"><span class="diag-label">Runtime Age</span><span class="diag-value" id="diag-runtime-age">--</span></div>
+      <div class="diag-row"><span class="diag-label">Poll Age</span><span class="diag-value" id="diag-poll-age">--</span></div>
+      <div class="diag-row"><span class="diag-label">Cmd Age</span><span class="diag-value" id="diag-cmd-age">--</span></div>
+      <div class="diag-row"><span class="diag-label">Poll Errors</span><span class="diag-value" id="diag-poll-errors">0</span></div>
+      <div class="diag-row"><span class="diag-label">API Errors</span><span class="diag-value" id="diag-api-errors">0</span></div>
+      <div class="diag-row"><span class="diag-label">Loop Overruns</span><span class="diag-value" id="diag-overruns">0</span></div>
+      <div class="diag-row"><span class="diag-label">Policy Stale</span><span class="diag-value" id="diag-policy-stale">0</span></div>
+      <div class="diag-row"><span class="diag-label">Loop Profile</span><span class="diag-value" id="diag-loop-profile">--</span></div>
+      <div class="diag-row"><span class="diag-label">Latest Target</span><span class="diag-value" id="diag-target">--</span></div>
+      <div class="diag-row"><span class="diag-label">Stand Balance</span><span class="diag-value" id="diag-stand">--</span></div>
+      <div class="diag-row"><span class="diag-label">Obs / Action</span><span class="diag-value" id="diag-signal">--</span></div>
+      <div class="diag-row"><span class="diag-label">Motor Fresh</span><span class="diag-value" id="diag-motor-fresh">--</span></div>
+      <div class="diag-row"><span class="diag-label">Odin Odom</span><span class="diag-value" id="diag-odom">--</span></div>
+      <div class="diag-row"><span class="diag-label">Zero-Cmd Suppression</span><span class="diag-value" id="diag-suppression">--</span></div>
+      <div class="diag-row"><span class="diag-label">Policy</span><span class="diag-value" id="diag-policy">--</span></div>
+    </div>
+
+    <div id="fault-box" class="panel-section hidden">
+      <h2 class="panel-title">Fault</h2>
+      <div id="fault-text" class="diag-value danger"></div>
+      <pre id="traceback-text" style="white-space:pre-wrap; font-size:11px; max-height:160px; overflow:auto;"></pre>
+    </div>
+
+    <div class="panel-section">
+      <h2 class="panel-title">Command</h2>
+      <div class="state-grid compact-grid">
+        <div class="state-item"><span class="k">输入源</span><span class="v" id="input-mode">WEB</span></div>
+        <div class="state-item"><span class="k">遥控可接管</span><span class="v" id="remote-allowed">NO</span></div>
+        <div class="state-item"><span class="k">遥控软急停</span><span class="v" id="remote-estop">OFF</span></div>
+        <div class="state-item"><span class="k">遥控端口</span><span class="v" id="remote-port">--</span></div>
+      </div>
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">vx</span>
+          <input type="range" id="cmd-vx" class="glass-slider" min="-1" max="1" step="0.05" value="0">
+          <span class="slider-val" id="cmd-vx-v">0.00</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">vy</span>
+          <input type="range" id="cmd-vy" class="glass-slider" min="-0.5" max="0.5" step="0.05" value="0">
+          <span class="slider-val" id="cmd-vy-v">0.00</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">yaw</span>
+          <input type="range" id="cmd-yaw" class="glass-slider" min="-1" max="1" step="0.05" value="0">
+          <span class="slider-val" id="cmd-yaw-v">0.00</span>
+        </div>
+        <button class="btn btn-secondary full-width mt-2" id="btn-cmd-zero">速度归零</button>
+      </div>
+    </div>
+
+    <div class="panel-section log-section flex-1">
+      <h2 class="panel-title">事件流</h2>
+      <div id="events-log" class="log"></div>
+    </div>
+
+    <div class="panel-section">
+      <h2 class="panel-title">Debug JSON</h2>
+      <pre id="debug-json" style="white-space:pre-wrap; font-size:11px; max-height:160px; overflow:auto;"></pre>
+    </div>
+
+    <div class="panel-section plots-section">
+      <h2 class="panel-title">实时曲线</h2>
+      <div class="plots-container" style="max-height: 200px;">
+        <canvas id="plot-pos"></canvas>
+        <canvas id="plot-vel"></canvas>
+        <canvas id="plot-imu"></canvas>
+        <canvas id="plot-diag"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="logs-modal" class="glass-modal hidden">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h2 class="panel-title">日志下载</h2>
+        <button class="btn-close" id="btn-close-logs">×</button>
+      </div>
+      <div class="modal-body">
+        <table id="logs-table">
+          <thead><tr><th>会话 ID</th><th>state.csv</th><th>events.jsonl</th><th>大小</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <button id="btn-show-logs" class="btn btn-secondary floating-btn" title="查看日志文件">🗂</button>
+  <span id="viewer-joint-count" class="viewer-count-indicator"></span>
+
+  <script type="module">
+    import { RobotViewer3D } from '/static/viewer/RobotViewer3D.js';
+    window.RobotViewer3D = RobotViewer3D;
+    const canvas = document.getElementById('viewer-canvas');
+    window.viewer3d = new RobotViewer3D(canvas, { meshBaseUrl: '/meshes/' });
+    try {
+      await window.viewer3d.load();
+      document.getElementById('viewer-status').textContent = '';
+      document.getElementById('viewer-joint-count').textContent = window.viewer3d.jointMap.size + ' joints';
+    } catch (error) {
+      document.getElementById('viewer-status').textContent = '3D 加载失败: ' + error.message;
+      console.error(error);
+    }
+    document.getElementById('btn-reset-camera').onclick = () => window.viewer3d.resetCamera();
+    window.addEventListener('resize', () => window.viewer3d.resize());
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -10,15 +10,12 @@ from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
-from deadzone_velocity_limiter import limit_deadzone_axis
-
 
 class ControlMode(str, Enum):
     DISABLED = "DISABLED"
     REMOTE = "REMOTE"
     WEB = "WEB"
     NAV = "NAV"
-    KEEP = "KEEP"
 
 
 class CmdMuxNode(Node):
@@ -36,37 +33,6 @@ class CmdMuxNode(Node):
         self.max_vx_acc = float(self.declare_parameter("cmd_mux_max_vx_acc", 1.0).value)
         self.max_vy_acc = float(self.declare_parameter("cmd_mux_max_vy_acc", 1.0).value)
         self.max_yaw_acc = float(self.declare_parameter("cmd_mux_max_yaw_acc", 1.5).value)
-        self.max_vx_decel = float(
-            self.declare_parameter("cmd_mux_max_vx_decel", self.max_vx_acc).value
-        )
-        self.max_vy_decel = float(
-            self.declare_parameter("cmd_mux_max_vy_decel", self.max_vy_acc).value
-        )
-        self.max_yaw_decel = float(
-            self.declare_parameter("cmd_mux_max_yaw_decel", self.max_yaw_acc).value
-        )
-        self.linear_deadzone_epsilon = float(
-            self.declare_parameter("cmd_mux_linear_deadzone_epsilon", 0.0).value
-        )
-        self.yaw_deadzone_epsilon = float(
-            self.declare_parameter("cmd_mux_yaw_deadzone_epsilon", 0.0).value
-        )
-        self.min_effective_vx = float(
-            self.declare_parameter("cmd_mux_min_effective_vx", 0.0).value
-        )
-        self.min_effective_vy = float(
-            self.declare_parameter("cmd_mux_min_effective_vy", 0.0).value
-        )
-        self.min_effective_yaw = float(
-            self.declare_parameter("cmd_mux_min_effective_yaw_rate", 0.0).value
-        )
-        self.deadzone_sources = {
-            item.strip().lower()
-            for item in str(
-                self.declare_parameter("cmd_mux_deadzone_sources", "nav").value
-            ).split(",")
-            if item.strip()
-        }
 
         self.mode = self.parse_mode(self.default_mode)
         self.estop = False
@@ -163,16 +129,9 @@ class CmdMuxNode(Node):
             elif self.mode == ControlMode.NAV and self.nav_enabled and self.is_fresh(self.nav_stamp, self.nav_timeout_ms, now):
                 target = self.latest_nav
                 source = "nav"
-            elif self.mode == ControlMode.KEEP:
-                source = "keep"
 
         target = self.limit_twist(target)
-        if self.estop:
-            target = Twist()
-            self.last_output = Twist()
-            self.last_pub_time = now
-        else:
-            target = self.accel_limit(target, now, source in self.deadzone_sources)
+        target = self.accel_limit(target, now)
         self.cmd_pub.publish(target)
         self.mode_pub.publish(String(data=self.mode.value))
         self.status_pub.publish(String(data=f"mode={self.mode.value},source={source},estop={self.estop}"))
@@ -190,46 +149,12 @@ class CmdMuxNode(Node):
         out.angular.z = self.clamp(msg.angular.z, -self.max_yaw, self.max_yaw)
         return out
 
-    def accel_limit(
-        self,
-        target: Twist,
-        now: rclpy.time.Time,
-        apply_deadzone: bool,
-    ) -> Twist:
+    def accel_limit(self, target: Twist, now: rclpy.time.Time) -> Twist:
         dt = max((now - self.last_pub_time).nanoseconds / 1.0e9, 1.0e-3)
-        min_effective_vx = self.min_effective_vx if apply_deadzone else 0.0
-        min_effective_vy = self.min_effective_vy if apply_deadzone else 0.0
-        min_effective_yaw = self.min_effective_yaw if apply_deadzone else 0.0
-        linear_deadzone_epsilon = self.linear_deadzone_epsilon if apply_deadzone else 0.0
-        yaw_deadzone_epsilon = self.yaw_deadzone_epsilon if apply_deadzone else 0.0
         out = Twist()
-        out.linear.x = limit_deadzone_axis(
-            self.last_output.linear.x,
-            target.linear.x,
-            dt,
-            self.max_vx_acc,
-            self.max_vx_decel,
-            min_effective_vx,
-            linear_deadzone_epsilon,
-        )
-        out.linear.y = limit_deadzone_axis(
-            self.last_output.linear.y,
-            target.linear.y,
-            dt,
-            self.max_vy_acc,
-            self.max_vy_decel,
-            min_effective_vy,
-            linear_deadzone_epsilon,
-        )
-        out.angular.z = limit_deadzone_axis(
-            self.last_output.angular.z,
-            target.angular.z,
-            dt,
-            self.max_yaw_acc,
-            self.max_yaw_decel,
-            min_effective_yaw,
-            yaw_deadzone_epsilon,
-        )
+        out.linear.x = self.step(self.last_output.linear.x, target.linear.x, self.max_vx_acc * dt)
+        out.linear.y = self.step(self.last_output.linear.y, target.linear.y, self.max_vy_acc * dt)
+        out.angular.z = self.step(self.last_output.angular.z, target.angular.z, self.max_yaw_acc * dt)
         self.last_output = out
         self.last_pub_time = now
         return out
@@ -237,6 +162,16 @@ class CmdMuxNode(Node):
     @staticmethod
     def clamp(value: float, low: float, high: float) -> float:
         return max(low, min(high, float(value)))
+
+    @staticmethod
+    def step(current: float, target: float, max_delta: float) -> float:
+        delta = target - current
+        if delta > max_delta:
+            return current + max_delta
+        if delta < -max_delta:
+            return current - max_delta
+        return target
+
 
 def main(args: Optional[list[str]] = None) -> None:
     rclpy.init(args=args)

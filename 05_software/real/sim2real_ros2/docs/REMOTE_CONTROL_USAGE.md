@@ -21,7 +21,7 @@ src/sim2real_runtime/src/remote_uart_node.py
 
 ## 2. 通道映射
 
-通道映射与本仓库第一代 Python Sim2Real 实现中的遥控器配置保持一致。
+通道映射与前一阶段 Python Sim2Real 中的遥控器实现保持一致。
 
 | 遥控器通道 | ROS 2 输出 | 含义 | 默认最大值 |
 |---|---|---|---:|
@@ -64,10 +64,6 @@ remote_invert_vy: false
 remote_invert_yaw: true
 remote_publish_inactive_zero: true
 remote_estop_latch: true
-remote_estop_channel: 7
-remote_estop_level: "high"
-remote_estop_debounce_frames: 3
-remote_estop_require_remote_mode: true
 remote_poll_hz: 50.0
 ```
 
@@ -280,7 +276,7 @@ ros2 launch sim2real_bringup sim2real_system.launch.py launch_nav2:=false
 /safety/estop: true
 ```
 
-由于当前 `remote_estop_latch: true`，急停是锁存式行为：在 `REMOTE` 模式下，CH7 连续 3 帧有效高位后，节点会发布急停，并保持内部急停已触发状态。恢复运行通常需要重启系统或手动发布复位信号，并确认机器人安全。
+由于当前 `remote_estop_latch: true`，急停是锁存式行为：一旦 CH7 高位触发，节点会发布急停，并保持内部急停已触发状态。恢复运行通常需要重启系统或手动发布复位信号，并确认机器人安全。
 
 ### 8.4 机器人行为效果
 

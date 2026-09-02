@@ -1,10 +1,9 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <cmath>
 #include <algorithm>
-
-#include "sim2real_common/deployment_contract.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -19,13 +18,10 @@ public:
   StandBalanceController(double control_dt = 0.02)
   : control_dt_(control_dt)
   {
+    profile_h_ = {0.157f, 0.248f, 0.311f, 0.366f, 0.411f, 0.448f};
+    profile_hip_ = {1.5f, 1.2f, 1.0f, 0.8f, 0.6f, 0.4f};
+    profile_knee_ = {-2.5f, -2.1f, -1.8f, -1.5f, -1.2f, -0.9f};
     reset();
-  }
-
-  void setNominalLegPose(float hip_pitch, float knee)
-  {
-    nominal_hip_pitch_ = hip_pitch;
-    nominal_knee_ = knee;
   }
 
   void reset()
@@ -38,8 +34,9 @@ public:
     const std::array<float, 3>& imu_gyro,
     const std::array<float, 3>& cmd)
   {
-    const float hip_base = nominal_hip_pitch_;
-    const float knee_base = nominal_knee_;
+    float hip_base = 0.9f;
+    float knee_base = -1.8f;
+    estimateBaseLegPose(hip_base, knee_base);
 
     float roll = 0.0f;
     float pitch = 0.0f;
@@ -87,9 +84,28 @@ private:
     pitch = std::atan2(gx, std::sqrt(std::max(1e-6f, gy * gy + gz * gz)));
   }
 
+  void estimateBaseLegPose(float& hip, float& knee)
+  {
+    float h_clamp = std::clamp(height_, profile_h_.front(), profile_h_.back());
+    hip = interpolate(h_clamp, profile_h_, profile_hip_);
+    knee = interpolate(h_clamp, profile_h_, profile_knee_);
+  }
+
+  float interpolate(float x, const std::vector<float>& xp, const std::vector<float>& fp)
+  {
+    if (x <= xp.front()) return fp.front();
+    if (x >= xp.back()) return fp.back();
+    for (std::size_t i = 0; i < xp.size() - 1; ++i) {
+      if (x >= xp[i] && x <= xp[i+1]) {
+        float f = (x - xp[i]) / (xp[i+1] - xp[i]);
+        return fp[i] + f * (fp[i+1] - fp[i]);
+      }
+    }
+    return fp.back();
+  }
+
   double control_dt_;
-  float nominal_hip_pitch_{DeploymentContract::kDefaultDofPos[1]};
-  float nominal_knee_{DeploymentContract::kDefaultDofPos[2]};
+  float height_{0.33f};
   float kp_roll_{0.85f};
   float kd_roll_rate_{0.03f};
   float lateral_lean_gain_{0.0f};
@@ -100,6 +116,10 @@ private:
   float stable_pitch_deg_{8.0f};
   float stable_gyro_deg_s_{45.0f};
   float enter_hold_s_{1.0f};
+
+  std::vector<float> profile_h_;
+  std::vector<float> profile_hip_;
+  std::vector<float> profile_knee_;
 
   float stable_time_{0.0f};
 };
