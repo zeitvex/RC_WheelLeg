@@ -78,18 +78,31 @@
 
 ## 实机展示
 
-当前仓库包含完赛效果演示视频，视频与预览图位于 `06_assets/`：
+当前仓库包含 Sim2Real 真机测试记录与比赛初版成果展示，视频与预览图位于 `06_assets/`：
+
+### 第一代 Sim2Real 真机测试记录
+
+<a href="06_assets/videos/early_sim2real.mp4">
+  <img
+    src="06_assets/images/early_sim2real_preview.jpg"
+    alt="第一代 Sim2Real 真机测试记录"
+    width="20%"
+  >
+</a>
+
+第一代 Sim2Real 真机测试记录，时长约 41 秒。点击预览图播放或下载原视频。
+
+### 比赛初版成果
 
 <a href="06_assets/videos/sim2real.mp4">
   <img
-    src="06_assets/images/early_sim2real_preview.jpg"
-    alt="完赛效果演示视频（不包含绕杆）"
+    src="06_assets/images/cf94fb6d9cfa01079a4f9fe082428dc.png"
+    alt="比赛初版成果"
     width="20%"
   >
 </a>
 
 该视频为完赛效果演示视频（不包含绕杆），画质为 1280×720 横屏，总时长约 1 分 20 秒，与比赛实际时长接近。点击预览图可播放或下载原视频。
-
 
 
 ## 目录结构
@@ -129,6 +142,8 @@ RC_WheelLeg/
 媒体资料：
 
 * [`06_assets/README.md`](06_assets/README.md)
+* [`06_assets/images/cf94fb6d9cfa01079a4f9fe082428dc.png`](06_assets/images/cf94fb6d9cfa01079a4f9fe082428dc.png)
+* [`06_assets/videos/early_sim2real.mp4`](06_assets/videos/early_sim2real.mp4)
 * [`06_assets/videos/sim2real.mp4`](06_assets/videos/sim2real.mp4)
 
 ## 软件相关
