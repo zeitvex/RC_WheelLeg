@@ -262,7 +262,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Mark avoid/no-go regions on a PCD map.")
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=820)
-    parser.add_argument("--pcd", type=Path, help="PCD file name/path. Relative paths are resolved from tools/nav_tools/pcd.")
+    parser.add_argument("--pcd", type=Path, help="PCD file name/path. Relative paths are resolved from this tool's pcd directory.")
     return parser.parse_args()
 
 
@@ -272,7 +272,7 @@ def main() -> int:
     selected_pcd = 0
     if args.pcd:
         if args.pcd.is_absolute():
-            raise SystemExit("Use a PCD file name under tools/nav_tools/pcd, not an absolute path.")
+            raise SystemExit("Use a PCD file name under the local pcd directory, not an absolute path.")
         requested = PCD_DIR / args.pcd
         if requested.exists() and requested not in pcd_files:
             pcd_files.append(requested)

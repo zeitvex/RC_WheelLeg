@@ -5,8 +5,8 @@
 ## 1. 先准备什么
 
 - 一张已经保存好的 `.bin` 地图
-- Odin1 的配置文件 `config/control_command.yaml`
-- 启动脚本 `D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh`
+- Odin1 的配置文件 `src/odin_ros_driver/config/control_command_relocal.yaml`
+- 启动脚本 `./start_relocalization.sh`
 
 建议把地图放到：
 
@@ -63,8 +63,7 @@ custom_init_pos: [5.2, -3.1, 0.0, 0.0, 0.0, 0.707, 0.707]
 4. 最后启动驱动。
 
 ```bash
-source <workspace>/install/setup.bash
-D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh
+./start_relocalization.sh /absolute/path/to/map.bin
 ```
 
 ## 5. 如果没成功

@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+TOOL_DIR = Path(__file__).resolve().parent
+TRAIN_ROOT = TOOL_DIR.parents[1] / "02_软件算法" / "训练仿真"
 
 ROBOT_BODY_LENGTH = 0.356
 ROBOT_BODY_WIDTH = 0.235
@@ -90,19 +92,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--points",
         type=Path,
-        default=Path("tools/nav_tools/points/points_20260715_120154.json"),
+        default=TOOL_DIR / "points/points_20260715_120154.json",
         help="Route JSON exported by nav_map_viewer.",
     )
     parser.add_argument(
         "--xml",
         type=Path,
-        default=Path("tools/nav_tools/xml/1hao.xml"),
+        default=TOOL_DIR / "xml/1hao.xml",
         help="Optional MuJoCo terrain XML used for metadata checks.",
     )
     parser.add_argument(
         "--onnx",
         type=Path,
-        default=Path("model_6800.onnx"),
+        default=TRAIN_ROOT / "model_6800.onnx",
         help="Optional ONNX policy path used for input/output shape reporting.",
     )
     parser.add_argument(

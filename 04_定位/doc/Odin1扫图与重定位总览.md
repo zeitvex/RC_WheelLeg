@@ -1,12 +1,12 @@
 # Odin1 扫图与重定位总览
 
-本页只整理 Odin1 在扫图、建图和重定位里的作用，不写活动规则和评分说明。
+本页整理 Odin1 在扫图、建图和重定位中的作用。
 
 ## 当前整理位置
 
 - 文档目录：`D:\git\odin\odin_open\04_定位\doc`
-- 配套脚本：`D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh`
-- 部署说明：`D:\git\odin\odin_open\04_定位\地图与重定位\doc\DEPLOYMENT_GUIDE.md`
+- 配套脚本：`runros.sh`、`start_mapping.sh`、`start_relocalization.sh`
+- 驱动包：`src/odin_ros_driver/`
 
 ## Odin1 在链路里的作用
 
@@ -27,19 +27,13 @@ Odin1 负责提供传感器数据、里程计和 TF 基础信息，支撑下面�
 ## 参考目录结构
 
 ```text
-D:\git\odin\odin_open
-├── 04_定位
-│   ├── 地图与重定位
-│   │   ├── runros.sh
-│   │   └── doc
-│   │       ├── README.md
-│   │       └── DEPLOYMENT_GUIDE.md
-│   └── doc
-│       ├── README.md
-│       ├── Odin1扫图与重定位总览.md
-│       ├── Odin1工作空间说明.md
-│       ├── Odin1使用手册.md
-│       └── Odin1重定位指南.md
+04_定位/doc/
+├── runros.sh
+├── build.sh
+├── start_mapping.sh
+├── start_relocalization.sh
+├── save_map.sh
+└── src/odin_ros_driver/
 ```
 
 ## 核心调用链
@@ -52,4 +46,3 @@ Odin1传感器数据 -> odin_ros_driver -> 建图 / 重定位 -> map -> odom -> 
 
 - 只保留 Odin1 相关内容。
 - 路径示例统一以当前仓库结构为准。
-- 不写规则、奖项、报名等说明。

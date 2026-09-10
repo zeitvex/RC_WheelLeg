@@ -21,24 +21,27 @@ Odin1 驱动 `odin_ros_driver` 主要做这些事：
 
 - `README.md`
 - `RELOCALIZATION_GUIDE.md`
-- `config/control_command.yaml`
-- `launch_ROS2/odin1_ros2.launch.py`
-- `set_param.sh`
-- `D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh`
-- `D:\git\odin\odin_open\04_定位\地图与重定位\doc\DEPLOYMENT_GUIDE.md`
+- `src/odin_ros_driver/config/control_command.yaml`
+- `src/odin_ros_driver/launch_ROS2/odin1_ros2.launch.py`
+- `src/odin_ros_driver/set_param.sh`
+- `runros.sh`
+- `build.sh`
+- `start_mapping.sh`
+- `start_relocalization.sh`
+- `save_map.sh`
 
 ## 4. 最小启动流程
 
 ```bash
 source /opt/ros/<distro>/setup.bash
-source <workspace>/install/setup.bash
-D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh
+./build.sh
+./runros.sh
 ```
 
 如果只想进入一个干净 shell：
 
 ```bash
-D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh --shell
+./runros.sh --shell
 ```
 
 ## 5. 三种模式
@@ -55,7 +58,7 @@ D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh --shell
 
 ### 建图模式
 
-把 `custom_map_mode` 设为 `1`，启动后移动设备采图，最后用 `set_param.sh` 保存地图。
+把 `custom_map_mode` 设为 `1`，启动后移动设备采图，最后用 `save_map.sh` 保存地图。
 
 ### 重定位模式
 
@@ -73,8 +76,8 @@ register_keys:
 启动后，缓慢移动 Odin1，覆盖需要的区域。完成后进入驱动目录保存地图：
 
 ```bash
-cd <workspace>/src/odin_ros_driver
-./set_param.sh save_map 1
+cd <workspace>
+./save_map.sh
 ```
 
 生成的地图通常是 `.bin` 文件。
@@ -107,4 +110,5 @@ register_keys:
 
 - 建图：`custom_map_mode = 1`
 - 重定位：`custom_map_mode = 2`
-- 启动：优先用 `D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh`
+- 扫图：`./start_mapping.sh`
+- 重定位：`./start_relocalization.sh /absolute/path/to/map.bin`

@@ -28,6 +28,8 @@ from route_safety_check import (
     point_segment_distance,
 )
 
+TOOL_DIR = Path(__file__).resolve().parent
+
 
 @dataclass
 class MutablePoint:
@@ -43,8 +45,8 @@ class MutablePoint:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate safer route candidates.")
-    parser.add_argument("--points", type=Path, default=Path("tools/nav_tools/points/points_20260715_120154.json"))
-    parser.add_argument("--out-dir", type=Path, default=Path("tools/nav_tools/points/auto_candidates"))
+    parser.add_argument("--points", type=Path, default=TOOL_DIR / "points/points_20260715_120154.json")
+    parser.add_argument("--out-dir", type=Path, default=TOOL_DIR / "points/auto_candidates")
     parser.add_argument("--avoid-margin", type=float, default=0.05)
     parser.add_argument("--extra-margin", type=float, default=0.08)
     parser.add_argument("--footprint-radius", type=float, default=None)

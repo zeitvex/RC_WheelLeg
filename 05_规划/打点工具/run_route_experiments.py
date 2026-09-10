@@ -12,15 +12,17 @@ from pathlib import Path
 from typing import Any
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+TOOL_ROOT = Path(__file__).resolve().parent
+ODIN_OPEN_ROOT = TOOL_ROOT.parents[1]
+TRAIN_ROOT = ODIN_OPEN_ROOT / "02_软件算法" / "训练仿真"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run route safety + sim2sim experiment suite.")
     parser.add_argument("--points", type=Path, required=True)
-    parser.add_argument("--terrain-xml", type=Path, default=PROJECT_ROOT / "tools/nav_tools/xml/1hao.xml")
-    parser.add_argument("--onnx", type=Path, default=PROJECT_ROOT / "model_6800.onnx")
-    parser.add_argument("--out-dir", type=Path, default=PROJECT_ROOT / "sim2sim/route_experiments")
+    parser.add_argument("--terrain-xml", type=Path, default=TOOL_ROOT / "xml/1hao.xml")
+    parser.add_argument("--onnx", type=Path, default=TRAIN_ROOT / "model_6800.onnx")
+    parser.add_argument("--out-dir", type=Path, default=TOOL_ROOT / "route_experiments")
     parser.add_argument("--start-yaw-offset-deg", type=float, default=-180.0)
     parser.add_argument("--heading-offset-deg", type=float, default=180.0)
     parser.add_argument("--start-z", type=float, default=0.75)
@@ -119,7 +121,7 @@ def run_sim_case(
     ]
     if args.no_local_safety:
         cmd.append("--no-local-safety")
-    code, output = run_command(cmd, PROJECT_ROOT)
+    code, output = run_command(cmd, TRAIN_ROOT)
     report_path = newest_report(case_out)
     report = load_report(report_path)
     return {
@@ -143,7 +145,7 @@ def main() -> int:
 
     safety_cmd = [
         sys.executable,
-        "tools/nav_tools/route_safety_check.py",
+        str(TOOL_ROOT / "route_safety_check.py"),
         "--points",
         str(args.points),
         "--xml",
@@ -153,7 +155,7 @@ def main() -> int:
         "--top",
         "12",
     ]
-    safety_code, safety_output = run_command(safety_cmd, PROJECT_ROOT)
+    safety_code, safety_output = run_command(safety_cmd, TOOL_ROOT)
     cases = []
     full_time = 60 if args.quick else 180
     slice_time = 45 if args.quick else 90

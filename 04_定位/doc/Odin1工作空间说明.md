@@ -15,16 +15,18 @@
 
 ## 当前位置的整理结果
 
-- Odin1 相关文档：`D:\git\odin\odin_open\04_定位\doc`
-- 部署脚本和运行说明：`D:\git\odin\odin_open\04_定位\地图与重定位`
+- Odin1 文档和运行工作区：`D:\git\odin\odin_open\04_定位\doc`
+- 驱动包：`D:\git\odin\odin_open\04_定位\doc\src\odin_ros_driver`
 
 ## 关键位置
 
 - 工作空间根目录：`<workspace>`
 - 驱动包目录：`<workspace>/src/odin_ros_driver`
 - 配置目录：`<workspace>/src/odin_ros_driver/config`
-- 地图目录：`<workspace>/src/odin_ros_driver/map`
-- 启动脚本：`D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh`
+- 地图保存目录：`<workspace>/src/odin_ros_driver/map`
+- 通用启动脚本：`<workspace>/runros.sh`
+- 扫图脚本：`<workspace>/start_mapping.sh`
+- 重定位脚本：`<workspace>/start_relocalization.sh`
 
 ## 基本流程
 
@@ -32,7 +34,7 @@
 2. 安装 ROS 2 依赖。
 3. 执行 `colcon build`。
 4. 执行 `source <workspace>/install/setup.bash`。
-5. 启动 `D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh`。
+5. 启动 `<workspace>/runros.sh`，或按模式使用 `start_mapping.sh`、`start_relocalization.sh`。
 
 ## 最常用命令
 
@@ -40,11 +42,11 @@
 cd <workspace>
 colcon build
 source <workspace>/install/setup.bash
-D:\git\odin\odin_open\04_定位\地图与重定位\runros.sh
+./runros.sh
 ```
 
 ## 说明
 
-- `runros.sh` 现在单独放在 `D:\git\odin\odin_open\04_定位\地图与重定位`，和部署说明放在一起。
+- `runros.sh`、建图和重定位脚本与驱动包都位于当前工作区。
 - 如果还没有 `install/`，先 build 再运行。
-- 当前目录里的 `doc/` 主要存放说明材料，真正运行时还是按工作空间结构来用。
+- `doc/` 本身就是工作空间根目录，不需要再跳转到其他分类目录。

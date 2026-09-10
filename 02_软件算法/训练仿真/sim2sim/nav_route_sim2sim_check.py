@@ -7,8 +7,8 @@ falling or entering avoid-region clearance.
 
 Example:
     uv run python sim2sim/nav_route_sim2sim_check.py \
-        --terrain-xml tools/nav_tools/xml/A.xml \
-        --points tools/nav_tools/points/points_20260705_174627.json \
+        --terrain-xml ../../../05_规划/打点工具/xml/A_C.xml \
+        --points ../../../05_规划/打点工具/points/points_20260715_120154.json \
         --onnx model_6800.onnx \
         --start-yaw-offset-deg -180 \
         --heading-offset-deg 180
@@ -39,15 +39,19 @@ import torch
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ODIN_OPEN_ROOT = Path(__file__).resolve().parents[3]
+PLANNING_TOOL_ROOT = ODIN_OPEN_ROOT / "05_规划" / "打点工具"
 SIM2SIM_DIR = Path(__file__).resolve().parent
 if str(SIM2SIM_DIR) not in sys.path:
     sys.path.insert(0, str(SIM2SIM_DIR))
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+if str(PLANNING_TOOL_ROOT) not in sys.path:
+    sys.path.insert(0, str(PLANNING_TOOL_ROOT))
 
 from interface.mujoco_io import MuJoCoIO  # noqa: E402
 from policy.policy_runner import PolicyRunner  # noqa: E402
-from tools.nav_tools.route_safety_check import (  # noqa: E402
+from route_safety_check import (  # noqa: E402
     AvoidRegion,
     Waypoint,
     default_lateral_footprint_radius,
@@ -1235,8 +1239,8 @@ class SlalomScriptFollower(NavGoodFollower):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run MuJoCo+ONNX route validation.")
-    parser.add_argument("--terrain-xml", type=Path, default=PROJECT_ROOT / "tools/nav_tools/xml/1hao.xml")
-    parser.add_argument("--points", type=Path, default=PROJECT_ROOT / "tools/nav_tools/points/points_20260715_120154.json")
+    parser.add_argument("--terrain-xml", type=Path, default=PLANNING_TOOL_ROOT / "xml/1hao.xml")
+    parser.add_argument("--points", type=Path, default=PLANNING_TOOL_ROOT / "points/points_20260715_120154.json")
     parser.add_argument("--onnx", type=Path, default=PROJECT_ROOT / "model_6800.onnx")
     parser.add_argument("--crawl-onnx", type=Path, default=PROJECT_ROOT / "model_crawl.onnx")
     parser.add_argument(

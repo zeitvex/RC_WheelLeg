@@ -8,7 +8,7 @@
 - `sim2sim.py`：较轻量的键盘控制与策略回放入口，优先加载 `model_6800.onnx`，缺失时回退到早期 `model_rough.pt`。
 - `ik_slalom_sim2sim.py`：不依赖 RL 策略的 IK、差速轮、路径跟踪和绕桩测试。
 - `ik_compensation_sweep.py`：批量扫描 IK 补偿参数并输出排序结果。
-- `nav_route_sim2sim_check.py`：使用 ONNX 策略批量检查内置任务或外部航点路线。
+- `nav_route_sim2sim_check.py`：使用 ONNX 策略批量检查内置任务或 `05_规划/打点工具/points/` 中的外部航点路线。
 - `export_onnx.py`：将兼容的 PyTorch actor checkpoint 导出并核对为 ONNX。
 - `interface/mujoco_io.py`：MuJoCo 模型、传感器和执行器接口。
 - `policy/policy_runner.py`：PT/ONNX 策略加载与历史观测缓存。
@@ -53,6 +53,6 @@ uv run --with-requirements .\sim2sim\requirements.txt python .\sim2sim\export_on
 - `../model_6800.onnx` 是 `last_not_slalom_1050` 最终真机工程使用的比赛 Rough 策略，SHA-256 为 `3C994BDD3434AD15770A52AC0E8D229F502F00D6511CDD42C2E2C742301AEF13`。
 - `../model_rough.pt` 是较早阶段的参考 checkpoint，两者不是同一版本的权重。
 - Crawl 模型未在本阶段归档；需要 Crawl 策略的入口会查找 `model_crawl.onnx` 或 `model_crawl.pt`。
-- `nav_route_sim2sim_check.py` 依赖 `../tools/nav_tools/route_safety_check.py` 的航点和避障几何定义；默认使用 `points_20260715_120154.json` 与 `1hao.xml`。
+- `nav_route_sim2sim_check.py` 依赖 `../../../05_规划/打点工具/route_safety_check.py` 的航点和避障几何定义；默认使用 `points_20260715_120154.json` 与 `1hao.xml`。
 
-运行时生成的日志、临时 XML、`route_check_runs/` 和批量实验输出不纳入版本库。人工打点形成的路线快照保存在 `../tools/nav_tools/points/`，大量重复仿真轨迹仍不复制。
+运行时生成的日志、临时 XML、`route_check_runs/` 和批量实验输出不纳入版本库。人工打点形成的路线快照保存在 `../../../05_规划/打点工具/points/`，大量重复仿真轨迹仍不复制。
