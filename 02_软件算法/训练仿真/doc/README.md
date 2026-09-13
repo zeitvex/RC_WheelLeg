@@ -94,7 +94,7 @@ cd sim2sim
 uv run python nav_sim2sim.py
 ```
 
-后期 Sim2Sim 的入口、模型边界和批量检查命令见 [`sim2sim/README.md`](sim2sim/README.md)。
+后期 Sim2Sim 的入口、模型边界和批量检查命令见 [`训练仿真/sim2sim/`](../sim2sim/) 目录中的脚本与说明。
 
 导航打点工具、路线快照和抽样点云说明见 [`05_规划/doc/README.md`](../../../05_规划/doc/README.md)。
 

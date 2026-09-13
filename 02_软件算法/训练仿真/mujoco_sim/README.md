@@ -28,7 +28,7 @@ Pinocchio 和 OSQP 没有加入训练环境锁文件，因为它们只服务于�
 
 ## 常用命令
 
-在 `05_software/train/rc_mjlab` 下执行：
+在 `02_软件算法/训练仿真` 下执行：
 
 ```bash
 # 不启动 MuJoCo 的快速姿态表

@@ -33,7 +33,7 @@ mjlab = { path = "mjlab", editable = true }
 
 ## 基本入口
 
-在 `05_software/train/rc_mjlab` 下执行：
+在 `02_软件算法/训练仿真` 下执行：
 
 ```bash
 uv sync
