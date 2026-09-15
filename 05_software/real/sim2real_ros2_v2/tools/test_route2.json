@@ -1,0 +1,64 @@
+{
+  "name": "test_route",
+  "map": "map_b",
+  "frame_id": "map",
+  "yawToleranceDegDefault": 45.0,
+  "requireYawDefault": false,
+  "preDockDistanceDefault": 0.35,
+  "preDockToleranceDefault": 0.18,
+  "createdAt": "2026-07-02T15:07:00.219Z",
+  "segments": [
+    {
+      "name": "segment_1",
+      "obstacle": "slalom",
+      "waypoints": [
+        {
+          "id": 1,
+          "x": 1.2,
+          "y": 0.5,
+          "yawDeg": 90,
+          "speed": 0.35,
+          "policy": "rough",
+          "tolerance": 0.25
+        },
+        {
+          "id": 2,
+          "x": 1.247,
+          "y": 1.748,
+          "yawDeg": 0,
+          "speed": 0.35,
+          "policy": "rough",
+          "tolerance": 0.25
+        },
+        {
+          "id": 3,
+          "x": 2.312,
+          "y": 1.673,
+          "yawDeg": -90,
+          "speed": 0.35,
+          "policy": "rough",
+          "tolerance": 0.25
+        },
+        {
+          "id": 4,
+          "x": 2.33,
+          "y": 0.496,
+          "yawDeg": -180,
+          "speed": 0.35,
+          "policy": "rough",
+          "tolerance": 0.25
+        },
+        {
+          "id": 5,
+          "x": 0.4626,
+          "y": 0.6271,
+          "yawDeg": 176,
+          "speed": 0.35,
+          "policy": "rough",
+          "tolerance": 0.25,
+          "requireYaw": true
+        }
+      ]
+    }
+  ]
+}

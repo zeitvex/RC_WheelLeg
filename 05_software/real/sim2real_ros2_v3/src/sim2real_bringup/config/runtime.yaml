@@ -1,0 +1,304 @@
+/**:
+  ros__parameters:
+    policy_hz: 50.0
+    motor_hz: 200.0
+    status_hz: 10.0
+    target_timeout_ms: 150.0
+    event_log_dir: "logs_v2_web"
+    model_engine_path: policies/model_6800_fp16.engine
+    prefer_tensorrt: true
+    model_path: policies/model_6800.onnx
+    rough_model_engine_path: policies/model_6800_fp16.engine
+    crawl_model_path: policies/model_crawl.onnx  # unused while crawl_backend is "ik"
+    crawl_model_engine_path: ""
+    wall_model_path: policies/model_84.onnx
+    wall_model_engine_path: policies/model_84_fp16.engine
+    rough_default_dof_pos: [0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.0, 0.0, 0.0]
+    wall_default_dof_pos: [0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.0, 0.0, 0.0]
+    crawl_backend: "ik"
+    crawl_default_dof_pos: [0.2, 1.697, -2.650, -0.2, 1.697, -2.650, 0.2, 1.697, -2.650, -0.2, 1.697, -2.650, 0.0, 0.0, 0.0, 0.0]
+    crawl_ik_wheel_linear_gain: 12.5
+    crawl_ik_wheel_yaw_gain: 8.0
+    crawl_ik_max_wheel_speed: 12.0
+    crawl_ik_abduction_clip: 0.45
+    crawl_ik_yaw_rate_kp: 0.5
+    crawl_ik_imu_posture: false
+    crawl_ik_encoder_posture_kp: 0.0
+    crawl_ik_encoder_posture_max: 0.03
+    crawl_ik_encoder_guard: false
+    crawl_ik_encoder_guard_start: 0.28
+    crawl_ik_encoder_guard_stop: 0.65
+    crawl_ik_imu_guard: true
+    crawl_ik_imu_guard_start_deg: 12.0
+    crawl_ik_imu_guard_stop_deg: 28.0
+    model_switch_transition_s: 0.9
+    model_switch_min_transition_s: 0.4
+    model_switch_to_stand_transition_scale: 2.1
+    model_switch_to_model_transition_scale: 2.4
+    model_switch_stand_hold_s: 0.45
+    model_switch_stand_max_err: 0.18
+    model_switch_stand_max_vel: 0.8
+    model_switch_release_scale: 1.0
+    runtime_max_vx: 0.9
+    runtime_max_vy: 0.5
+    runtime_max_yaw_rate: 0.85
+    debug_trace_enabled: true
+    debug_trace_decimation: 1
+    use_cuda: true  # enable CUDA Execution Provider on Orin Nano GPU
+    contract_file: deployment_contract.yaml
+    dry_run: false
+    can0_name: "can0"
+    can1_name: "can1"
+    imu_topic: "/odin1/imu"
+    odom_topic: "/odom"
+    
+    # Remote UART / SBUS parameters, aligned with the first-generation Python deployment
+    remote_enabled: false # true
+    remote_port: "/dev/ttyACM0"
+    remote_baudrate: 100000
+    remote_timeout: 0.02
+    remote_axis_deadzone: 40
+    remote_active_threshold: 40
+    remote_axis_full_scale: 660.0
+    remote_max_vx: 0.9
+    remote_max_vy: 0.5
+    remote_max_yaw_rate: 0.85
+    remote_invert_vx: true
+    remote_invert_vy: false
+    remote_invert_yaw: true
+    remote_publish_inactive_zero: true
+    remote_estop_latch: true
+    remote_poll_hz: 50.0
+    remote_model_switch_enabled: true
+    remote_model_switch_channel: 10
+    remote_model_switch_debounce_frames: 3
+    remote_model_switch_rough_level: "low"
+    remote_model_switch_ik_level: "high"
+
+    # Command mux parameters
+    cmd_mux_default_mode: "NAV"
+    cmd_mux_output_hz: 50.0
+    cmd_mux_remote_timeout_ms: 250.0
+    cmd_mux_web_timeout_ms: 300.0
+    cmd_mux_nav_timeout_ms: 500.0
+    cmd_mux_max_vx: 0.9
+    cmd_mux_max_vy: 0.5
+    cmd_mux_max_yaw_rate: 0.85
+    cmd_mux_max_vx_acc: 1.0
+    cmd_mux_max_vy_acc: 1.0
+    cmd_mux_max_yaw_acc: 1.5
+    cmd_mux_max_vx_decel: 2.0
+    cmd_mux_max_vy_decel: 2.0
+    cmd_mux_max_yaw_decel: 2.0
+    # The rough locomotion policy has an approximately 0.2 m/s linear command dead zone.
+    # Skip that ineffective band on start-up, but still allow exact zero for braking/estop.
+    cmd_mux_linear_deadzone_epsilon: 0.05
+    cmd_mux_yaw_deadzone_epsilon: 0.02
+    cmd_mux_min_effective_vx: 0.22
+    cmd_mux_min_effective_vy: 0.22
+    cmd_mux_min_effective_yaw_rate: 0.0
+    cmd_mux_deadzone_sources: "nav"
+
+    # Windows/Nano Web UDP bridge parameters
+    web_bridge_enabled: true
+    web_http_host: "0.0.0.0"
+    web_http_port: 18080
+    web_static_dir: ""
+    # Odom task actual path export; files can be opened by nav_tools over the PCD.
+    odom_trace_export_dir: "map/load"
+    web_udp_listen_host: "0.0.0.0"
+    web_udp_listen_port: 15000
+    web_udp_remote_host: ""
+    web_udp_remote_port: 15001
+    web_udp_state_hz: 20.0
+    web_udp_cmd_timeout_ms: 300.0
+    web_udp_max_packet_bytes: 8192
+    web_udp_max_vx: 0.9
+    web_udp_max_vy: 0.3
+    web_udp_max_yaw_rate: 0.85
+    web_udp_estop_on_timeout: false
+    
+    # Safety parameters
+    safety_enabled: true
+    max_target_offset: 2.4
+    model_switch_max_target_offset: 1.8
+    hard_target_offset: 3.0
+    max_ang_vel: 30.0
+    max_tilt_z: -0.3
+    clip_to_brake: 0
+    imu_age_warn_ms: 60.0
+    imu_age_stop_ms: 500.0
+    wheel_no_effect_command_threshold: 1.0
+    wheel_no_effect_min_response_ratio: 0.20
+    wheel_no_effect_velocity_epsilon: 0.25
+    wheel_no_effect_max_temperature_c: 90.0
+    wheel_no_effect_min_bus_voltage_v: 18.0
+    wheel_no_effect_command_warmup_cycles: 12
+    wheel_no_effect_trigger_cycles: 30
+    wheel_no_effect_attempt_limit: 2
+    wheel_no_effect_cooldown_ms: 1200
+    wheel_recovery_verify_timeout_ms: 180
+    wheel_no_effect_diag_freshness_ms: 350
+    wheel_no_effect_diag_request_period_ms: 80
+    leg_no_effect_position_error_threshold: 0.18
+    leg_no_effect_velocity_epsilon: 0.12
+    leg_no_effect_max_estimated_current_arms: 4.0
+    leg_no_effect_max_abs_torque_nm: 5.0
+    leg_no_effect_max_temperature_c: 100.0
+    leg_no_effect_min_bus_voltage_v: 18.0
+    leg_no_effect_command_warmup_cycles: 40
+    leg_no_effect_trigger_cycles: 25
+    leg_no_effect_attempt_limit: 2
+    leg_no_effect_cooldown_ms: 1200
+    leg_recovery_verify_timeout_ms: 220
+
+    # Policy alignment with the first-generation Python deployment
+    command_release_s: 0.35
+    release_command_hold_s: 0.12
+    release_posture_max_err: 0.35
+    release_target_blend_s: 0.30
+    clip_obs: 100.0
+    hold_zero_command_pose: true
+    enable_zero_cmd_suppression: true
+    require_active_command_to_release: true
+    zero_cmd_use_yaw_rate: true
+
+    # Simple navigation parameters
+    localization_mode: "relocal" # relocal: wait for Odin map/odom TF; odom: bridge map->odom fallback
+    nav_map_frame: "map"
+    nav_odom_frame: "odom"
+    nav_base_frame: "base_link"
+    nav_control_hz: 20.0
+    nav_goal_tolerance: 0.20
+    nav_yaw_stop_threshold: 0.80
+    nav_max_vx: 0.90
+    nav_max_vy: 0.50
+    nav_max_wz: 0.85
+    nav_kp_dist: 0.80
+    nav_kp_yaw: 1.80
+    nav_goal_exit_tolerance_margin: 0.08
+    nav_goal_complete_stable_cycles: 2
+    nav_final_align_kp_yaw_scale: 0.60
+    nav_final_align_max_wz: 0.45
+    nav_final_align_creep_speed: 0.05
+    nav_goal_yaw_tolerance_deg: 12.0
+    nav_astar_enabled: true
+    nav_astar_resolution: 0.10
+    nav_astar_pcd_sample_step: 5
+    nav_astar_allow_diagonal: true
+    nav_astar_smooth_enabled: true
+    nav_astar_corner_blend_dist: 0.20
+    nav_astar_waypoint_reach_dist: 0.18
+    nav_astar_lookahead_dist: 0.35
+    nav_astar_snap_radius: 0.60
+    nav_astar_max_expansions: 120000
+    # Slalom is treated as a continuous path by simple_nav even if the route JSON
+    # was saved without precisionFollow/stableCycles/lookahead metadata.
+    nav_slalom_auto_precision_enabled: true
+    nav_slalom_auto_precision_force: true
+    nav_slalom_task_names: "slalom"
+    nav_slalom_stable_cycles: 0
+    nav_slalom_lookahead: 0.35
+    nav_slalom_yaw_rate_limit: 0.45
+    nav_slalom_tolerance: 0.15
+    nav_slalom_max_vx: 0.58
+    nav_slalom_min_vx: 0.22
+    nav_slalom_curvature_slowdown_enabled: true
+    nav_slalom_min_turn_speed_scale: 0.45
+    # Execute waypoints marked slalomStraight as odometry-closed scripted moves.
+    nav_slalom_script_enabled: true
+    nav_slalom_script_start_tolerance: 0.22
+    nav_slalom_script_pos_tolerance: 0.10
+    nav_slalom_script_yaw_tolerance_deg: 5.0
+    nav_slalom_script_drive_yaw_deadband_deg: 8.0
+    nav_slalom_script_stable_cycles: 1
+    nav_slalom_script_rotate_steps_enabled: false
+    nav_slalom_script_final_rotate_enabled: false
+    nav_slalom_script_require_yaw_at_step: false
+    nav_slalom_script_kp_dist: 1.00
+    nav_slalom_script_kp_yaw: 1.20
+    nav_slalom_script_max_vx: 0.58
+    nav_slalom_script_max_vy: 0.50
+    nav_slalom_script_max_wz: 0.50
+    nav_slalom_script_min_cmd_linear: 0.22
+    nav_slalom_script_min_cmd_angular: 0.20
+    nav_slalom_script_min_cmd_epsilon: 0.05
+    nav_slalom_script_min_step_distance: 0.02
+    nav_slalom_script_yaw_gate_deg: 8.0
+    nav_slalom_script_lateral_gate: 0.07
+    nav_slalom_script_lateral_slow_gate: 0.15
+    nav_slalom_script_lateral_creep_vx: 0.22
+    nav_slalom_script_drive_yaw_source: "segment"
+    nav_slalom_script_segment_yaw_min_dist: 0.45
+    nav_precision_lateral_control_enabled: true
+    nav_precision_lateral_kp: 0.80
+    nav_precision_lateral_max_vy: 0.22
+    # Lightweight DWA-style local safety layer over the route/avoid polygons.
+    nav_local_planner_enabled: true
+    nav_local_planner_tasks: "slalom"
+    nav_local_planner_precision_enabled: true
+    nav_local_planner_sim_time: 0.9
+    nav_local_planner_sim_dt: 0.1
+    nav_local_planner_v_samples: 5
+    nav_local_planner_w_samples: 7
+    nav_local_planner_vy_samples: 3
+    nav_local_planner_obstacle_margin: 0.08
+    nav_local_planner_recovery_clearance_epsilon: 0.005
+    # 0.0 means auto: use the nav_tools body+wheel lateral footprint.
+    nav_local_planner_robot_radius: 0.0
+    nav_local_planner_clearance_weight: 2.0
+    nav_local_planner_path_weight: 2.0
+    nav_local_planner_heading_weight: 0.7
+    nav_local_planner_speed_weight: 0.3
+    nav_local_planner_nominal_weight: 1.0
+    nav_local_planner_min_vx: 0.22
+    nav_slalom_script_safety_filter_enabled: true
+    nav_local_planner_use_astar_grid: false
+    nav_turn_in_place_enabled: true
+    nav_turn_in_place_enter_yaw_deg: 70.0
+    nav_turn_in_place_exit_yaw_deg: 18.0
+    nav_turn_in_place_max_wz: 0.80
+    nav_pre_dock_enabled: true
+    nav_pre_dock_distance: 0.35
+    nav_pre_dock_tolerance: 0.18
+    nav_pre_dock_skip_within_goal_dist: 0.45
+    nav_goals_file: ""
+    nav_missions_file: ""
+    # Keep the legacy YAML route for reference; active task is selected by nav_route_task_file below.
+    nav_route_file: ""
+    # Task switch entry: change this path to another .json/.yaml route file, then relaunch or reload the nav nodes.
+    # The web "odom" button uses the first waypoint of this route as the fixed odom fallback start pose.
+    nav_route_task_file: map/routes/1hao_reall.json
+    nav_route_auto_align_enabled: false
+    nav_route_rotation_offset_deg: 0.0
+    nav_route_align_max_angle_deg: 6.0
+    nav_route_align_angle_step_deg: 0.5
+    nav_route_align_search_radius: 0.35
+    nav_avoid_regions_enabled: true
+    nav_avoid_region_margin: 0.0
+    # 0.0 means auto: use the nav_tools body+wheel lateral footprint for avoid-region inflation.
+    nav_avoid_footprint_radius: 0.0
+    nav_robot_body_length: 0.356
+    nav_robot_body_width: 0.235
+    nav_robot_body_center_x: 0.1518
+    nav_robot_origin_from_front: 0.105
+    nav_robot_pose_hip: 0.550
+    nav_robot_pose_knee: -1.125
+    nav_robot_wheel_vis_length: 0.16
+    nav_robot_wheel_vis_width: 0.055
+    nav_robot_footprint_padding: 0.02
+    odom_fallback_require_odom_fresh: true
+    odom_fallback_max_odom_age_ms: 500.0
+    odom_fallback_block_existing_map_odom_tf: true
+    odom_fallback_tf_conflict_window_s: 1.0
+    odom_fallback_tf_conflict_xy_tolerance: 0.05
+    odom_fallback_tf_conflict_yaw_tolerance_deg: 2.0
+    # Keep odom fallback running if Odin relocalizes mid-task; hand off after mission end or Exit odom.
+    odom_fallback_stop_on_external_tf: false
+    pcd_nav_file: map/1hao.pcd
+    pcd_floor_z_min: -1.6
+    pcd_floor_z_max: 0.4
+    pcd_sample_step: 25
+    pcd_robot_radius: 0.18
+
+

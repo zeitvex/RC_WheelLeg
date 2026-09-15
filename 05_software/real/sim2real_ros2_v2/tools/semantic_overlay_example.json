@@ -1,0 +1,52 @@
+{
+  "elements": [
+    {
+      "name": "wall_01",
+      "label": "wall",
+      "type": "rect",
+      "x": 1.8,
+      "y": -7.0,
+      "length": 1.0,
+      "width": 0.05,
+      "yawDeg": 90.0
+    },
+    {
+      "name": "low_bar_01",
+      "label": "low_bar",
+      "type": "rect",
+      "x": 5.7,
+      "y": -9.0,
+      "length": 1.0,
+      "width": 0.03,
+      "yawDeg": 0.0
+    },
+    {
+      "name": "slalom_pole_01",
+      "label": "slalom_pole",
+      "type": "circle",
+      "x": 1.8,
+      "y": -10.5,
+      "radius": 0.05
+    },
+    {
+      "name": "stairs_area",
+      "label": "stairs",
+      "type": "rect",
+      "x": 2.4,
+      "y": -3.5,
+      "length": 2.4,
+      "width": 1.2,
+      "yawDeg": 0.0
+    },
+    {
+      "name": "ramp_area",
+      "label": "ramp",
+      "type": "rect",
+      "x": 5.2,
+      "y": -5.2,
+      "length": 2.0,
+      "width": 3.0,
+      "yawDeg": 0.0
+    }
+  ]
+}

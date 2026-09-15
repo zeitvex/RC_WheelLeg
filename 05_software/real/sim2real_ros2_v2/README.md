@@ -1,6 +1,6 @@
-# ROS 2 Sim2Real v2
+# ROS 2 Sim2Real v2：里程计导航联调
 
-本目录归档 `real/sim2real_ros2_v2`，对应重排主线的 `v0.11.0`。该阶段在 ROS 2/C++ 初版基础上增加简单导航、PCD 交互定位、任务点/任务序列和 Web 导航调试。
+本目录归档 `real/sim2real_ros2_v2(odom)`，对应重排主线的 `v0.12.0`。该阶段在 `v0.11.1` 的 Odin/TensorRT 与站姿调参基础上，固定纯里程计模式，增加 odom fallback 的 TF 冲突保护、A_min 路线和地图工具。
 
 本工程保留当前 `sim2real` 已验证的部署契约，同时将运行时热路径迁移到 C++：
 
@@ -70,5 +70,7 @@ Nav2 / cmd_vel  ------------------------------>  sim2real_runtime
 - Windows 仅作为编辑环境使用。
 - 观测顺序、动作缩放、默认站姿、电机映射不得独立修改，
   除非训练与部署同步更新。
-- 原始快照中的 `src/odin_ros_driver` 仍为空目录，本版本需要另行提供兼容驱动；完整 Odin 驱动从后续站姿调参版本开始随工程归档。
-- 原始 `map1.pcd` 和 `map6.pcd` 已确定性抽样到 10 MB 以下，点数和哈希见 [`map/README.md`](map/README.md)。
+- 默认 Rough 策略为 `model_9600`，默认站姿回到比赛站姿髋俯仰 `0.550`、膝关节 `-1.125`。
+- Odin `custom_map_mode` 固定为 `0`（纯里程计），避免没有 `map_a.bin` 时产生 map/odom TF 冲突。
+- `A_min.pcd`、`C.pcd` 和 `map_b.pcd` 均为确定性抽样预览，点数和哈希见 [`map/README.md`](map/README.md)。
+- TensorRT engine 与 JetPack、TensorRT 版本及 GPU 架构有关，其他机器应从 ONNX 重新生成。

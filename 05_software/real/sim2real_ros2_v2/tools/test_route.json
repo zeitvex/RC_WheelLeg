@@ -1,0 +1,204 @@
+{
+  "name": "test_route",
+  "map": "map_b",
+  "frame_id": "map",
+  "yawToleranceDegDefault": 30.0,
+  "createdAt": "2026-07-02T12:18:22.647Z",
+  "segments": [
+    {
+      "name": "segment_1",
+      "obstacle": "slalom",
+      "waypoints": [
+        {
+          "id": 1,
+          "x": 5.359,
+          "y": 2.442,
+          "yawDeg": 0,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 2,
+          "x": 6.924,
+          "y": 2.388,
+          "yawDeg": -90,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 3,
+          "x": 6.827,
+          "y": 0.712,
+          "yawDeg": -5,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 4,
+          "x": 9.368,
+          "y": 0.706,
+          "yawDeg": -3,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 5,
+          "x": 11.373,
+          "y": 0.43,
+          "yawDeg": 0,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 6,
+          "x": 12.877,
+          "y": 0.432,
+          "yawDeg": 90,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.1
+        },
+        {
+          "id": 7,
+          "x": 12.935,
+          "y": 2.241,
+          "yawDeg": 88.2,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.1
+        },
+        {
+          "id": 8,
+          "x": 12.991,
+          "y": 4.277,
+          "yawDeg": 180,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.1
+        },
+        {
+          "id": 9,
+          "x": 12.004,
+          "y": 4.339,
+          "yawDeg": -90,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 10,
+          "x": 11.872,
+          "y": 2.583,
+          "yawDeg": 180,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 11,
+          "x": 9.5719,
+          "y": 2.7972,
+          "yawDeg": 174.7,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 12,
+          "x": 9.508,
+          "y": 3.562,
+          "yawDeg": 180,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 13,
+          "x": 8.414,
+          "y": 3.573,
+          "yawDeg": 125,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 14,
+          "x": 7.867,
+          "y": 4.528,
+          "yawDeg": 180,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 15,
+          "x": 4.475,
+          "y": 4.743,
+          "yawDeg": 180,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 16,
+          "x": 4.926,
+          "y": 4.785,
+          "yawDeg": 180,
+          "speed": 0.4,
+          "policy": "crawl",
+          "tolerance": 0.1
+        },
+        {
+          "id": 17,
+          "x": 3.2951,
+          "y": 4.7963,
+          "yawDeg": 179.6,
+          "speed": 0.4,
+          "policy": "crawl",
+          "tolerance": 0.1
+        },
+        {
+          "id": 18,
+          "x": 3.092,
+          "y": 4.777,
+          "yawDeg": -180,
+          "speed": 0.4,
+          "policy": "crawl",
+          "tolerance": 0.1
+        },
+        {
+          "id": 19,
+          "x": 1.694,
+          "y": 4.886,
+          "yawDeg": 210,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.1
+        },
+        {
+          "id": 20,
+          "x": 1.055,
+          "y": 4.548,
+          "yawDeg": -90,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.1
+        },
+        {
+          "id": 21,
+          "x": 1.042,
+          "y": 2.92,
+          "yawDeg": -90.4,
+          "speed": 0.4,
+          "policy": "rough",
+          "tolerance": 0.1
+        }
+      ]
+    }
+  ]
+}

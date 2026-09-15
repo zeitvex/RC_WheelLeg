@@ -26,17 +26,23 @@ Python Sim2Real v2，保留 `53D -> 16D` 策略接口，并增加电机反馈新
 
 部署说明见 [`sim2real_v2/README.md`](sim2real_v2/README.md) 与 [`sim2real_v2/DEPLOYMENT.md`](sim2real_v2/DEPLOYMENT.md)。
 
-## `sim2real_ros2`
+## ROS 2/C++ 版本线
 
-ROS 2/C++ Sim2Real 初版，将策略热路径迁移为 50 Hz C++ 推理和 200 Hz CAN 电机循环，并加入 ROS 2 消息、命令仲裁、Nav2 与统一启动结构。该版本对应重排主线的 `v0.10.0`。
+### `sim2real_ros2`（初版，`v0.10.0`）
 
-原始快照没有随工程保存 Odin ROS 2 驱动源码，该依赖边界见 [`sim2real_ros2/README.md`](sim2real_ros2/README.md)。
+无后缀目录固定表示 ROS 2/C++ Sim2Real 初版：将策略热路径迁移为 50 Hz C++ 推理和 200 Hz CAN 电机循环，并加入 ROS 2 消息、命令仲裁、Nav2 与统一启动结构。原始快照未随工程保存 Odin ROS 2 驱动源码，依赖边界见 [`sim2real_ros2/README.md`](sim2real_ros2/README.md)。
 
-## `sim2real_ros2_v2`
+### `sim2real_ros2_v2`（`v0.11.0`～`v0.12.0`）
 
-ROS 2 Sim2Real v2 导航原型，在初版基础上增加简单导航节点、PCD 交互定位、任务点/任务序列和 Web 导航调试。该版本对应重排主线的 `v0.11.0`。
+在 `v0.11.0` 中，该目录是 ROS 2 Sim2Real v2 导航原型，增加简单导航节点、PCD 交互定位、任务点/任务序列和 Web 导航调试。
 
-本阶段的两份大体积 PCD 已确定性抽样，Odin 驱动仍为外部依赖；详细边界见 [`sim2real_ros2_v2/README.md`](sim2real_ros2_v2/README.md)。
+`v0.11.1` 在同一路径继续演进，首次归档完整 Odin 驱动、TensorRT、多策略切换和硬件诊断，并使用 `hip=0.670`、`knee=-1.390` 的调参站姿。
+
+`v0.12.0` 仍在同一路径上形成里程计导航联调快照：固定纯里程计模式，加入 odom fallback 的 TF 冲突保护、A_min 路线和多地图工具；默认 Rough 策略为 `model_9600`，默认站姿回到比赛站姿。当前该目录保持 `v0.12.0` 快照，阶段说明见 [`sim2real_ros2_v2/README.md`](sim2real_ros2_v2/README.md)。
+
+### `sim2real_ros2_v3`（最终比赛版，`v1.0.0`）
+
+第三版来自原始目录 `sim2real_ros2_v2(last_not_slalom_1050)`，整理时正式命名为 `sim2real_ros2_v3`。它是 1050 分比赛最终部署，包含 `model_6800` Rough、`model_84` Wall、最终路线、完整 Odin 驱动、CAN 和触控屏。部署说明见 [`sim2real_ros2_v3/README.md`](sim2real_ros2_v3/README.md)。
 
 ## 实机记录
 

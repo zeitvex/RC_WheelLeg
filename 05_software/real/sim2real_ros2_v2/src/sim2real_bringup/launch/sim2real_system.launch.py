@@ -1,7 +1,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch.conditions import IfCondition
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterFile
@@ -49,6 +49,14 @@ def generate_launch_description():
         description='Whether to launch the simple waypoint navigation node'
     )
 
+    event_log_dir_arg = DeclareLaunchArgument(
+        'event_log_dir',
+        default_value=PythonExpression([
+            "'logs_v2_web/run_' + __import__('datetime').datetime.now().strftime('%Y-%m-%d_%H-%M-%S_%f')[:-3]"
+        ]),
+        description='Per-run event log directory'
+    )
+
     # Include odin_ros_driver launch
     driver_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -80,19 +88,20 @@ def generate_launch_description():
         launch_remote_arg,
         launch_web_bridge_arg,
         launch_simple_nav_arg,
+        event_log_dir_arg,
         Node(
             package="sim2real_hw",
             executable="sim2real_hw_node",
             name="sim2real_hw_node",
             output="screen",
-            parameters=[runtime_params],
+            parameters=[runtime_params, {"event_log_dir": LaunchConfiguration("event_log_dir")}],
         ),
         Node(
             package="sim2real_runtime",
             executable="sim2real_runtime_node",
             name="sim2real_runtime_node",
             output="screen",
-            parameters=[runtime_params],
+            parameters=[runtime_params, {"event_log_dir": LaunchConfiguration("event_log_dir")}],
         ),
         Node(
             package="sim2real_runtime",
@@ -141,4 +150,3 @@ def generate_launch_description():
         driver_launch,
         nav2_launch,
     ])
-

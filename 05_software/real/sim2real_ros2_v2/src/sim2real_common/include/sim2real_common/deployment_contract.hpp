@@ -64,10 +64,10 @@ struct DeploymentContract
   };
 
   static constexpr std::array<float, 16> kDefaultDofPos = {
-    0.0f, 0.9f, -1.8f,
-    0.0f, 0.9f, -1.8f,
-    0.0f, 0.9f, -1.8f,
-    0.0f, 0.9f, -1.8f,
+    0.0f, 0.550f, -1.125f,
+    0.0f, 0.550f, -1.125f,
+    0.0f, 0.550f, -1.125f,
+    0.0f, 0.550f, -1.125f,
     0.0f, 0.0f, 0.0f, 0.0f
   };
 };

@@ -1,0 +1,110 @@
+register_keys:
+
+  # if off, allow connection even if usb connection is below usb 3.0
+  # ATTENTION: usb 3.0 is always recommended, as advance functionality like SLAM mode requires usb 3.0 for reliable map file transfer
+  strict_usb3.0_check: 0  # 0: off: 1: on;
+
+  # 0: use odin internal system time as data time stamp, typical and recommended;
+  # 1: use host ros time (upon receive) as data time stamp, only use if you specifically require this setup, not recommended for most users
+  # 2: align odin1 time to host time, timestamp is the sensor data reception time on host time axis
+  use_host_ros_time: 1
+
+  streamctrl: 1           # 0: off; 1: on
+
+  # original rgb data in jpeg format from device
+  sendrgbcompressed: 1    # 0: off; 1: on
+
+  # RGB data, decoded from original jpeg data from device, bgr8 format
+  # Processed on host device
+  sendrgb: 1              # 0: off; 1: on
+
+  # undistort rgb image processed from decoded rgb data.
+  # depends on sendrgb. related camera parameters can be found in ws/src/odin_ros_driver/config/calib.yaml
+  # Processed on host device
+  sendrgbundistort: 0    # 0: off; 1: on.
+
+  # IMU data
+  sendimu: 1              # 0: off; 1: on
+
+  # SDK IMU smooth sending feature
+  # When enabled, SDK will send IMU data at precise intervals (default 400Hz)
+  # using a dedicated high-priority thread to reduce jitter and timing variance
+  enable_imu_smooth: 1    # 0: disable SDK IMU smooth sending; 1: enable (default)
+
+  # SDK IMU smooth sending frequency in Hz (only effective when enable_imu_smooth = 1)
+  imu_smooth_frequency: 400  # 1-1000 Hz, recommended 400 Hz
+
+  # Odometry data
+  sendodom: 1             # 0: off; 1: on
+
+  # TF from odom to base_link. Leave it on unless you specifically need it off.
+  # ATTENTION: critical for rviz to show cloud_raw.
+  send_odom_baselink_tf: 0 # 0: off; 1: on.
+
+  # raw dtof data
+  senddtof: 1             # 0: off; 1: on
+  cloud_raw_confidence_threshold: 35 # please refer to readme for more details
+
+  # dtof sensor frame rate. Supported values: 100 (10fps) or 145 (14.5fps)
+  # Higher frame rate provides smoother point cloud data but may increase data bandwidth
+  # Note: value is multiplied by 10 (e.g., 145 means 14.5fps)
+  dtof_fps: 100           # 100: 10fps; 145: 14.5fps
+
+  # slam cloud data
+  sendcloudslam: 1        # 0: off; 1: on
+
+  # processed with raw point cloud, rgb image, and calib.yaml from device
+  # Processed on host device
+  sendcloudrender: 1      # 0: off; 1: on
+
+  # depth completion demo, high computing resource usage.
+  # for more information please refer to the readme file.
+  # Processed on host device
+  senddepth: 0            # 0: off; 1: on
+
+  # cloud reprojection demo, projects cloud_slam to camera image using odometry
+  # Processed on host device
+  sendreprojection: 0    # 0: off; 1: on
+
+  # image overlay settings - overlays reprojected points on camera image
+  # Processed on host device
+  sendoverlay: 0                                    # 0: off; 1: on
+  overlay_reprojected_topic: "/odin1/reprojected_image"  # reprojected image topic
+  overlay_camera_topic: "/odin1/image/undistorted"       # camera image topic (undistorted)
+  overlay_output_topic: "/odin1/overlay_image"           # output overlay image topic
+  overlay_alpha: 0.6                                     # blend alpha (0.0-1.0, higher = more reproj color)
+
+  # record rgb, odometry, and slam cloud data as proprietary olx format for further processing in MindCloud(TM) software.
+  # save path: ws/src/odin_ros_driver/recorddata/{record_start_time}/
+  # ATTENTION: please copy the full folder for post-processing.
+  recorddata: 0           # 0: off; 1: on
+
+  # Save device runtime status info to ws/src/odin_ros_driver/log/Driver_{drvier_start_time}/Conn_{device_connection_time}/dev_status.csv
+  devstatuslog: 1         # 0: off; 1: on.
+
+  save_log: 0 # 0: off; 1: on;
+
+  # raw dtof sensor intensity data in gray format, mostly for debug purpose.
+  pubintensitygray: 0     # 0: off; 1: on
+
+  showpath: 0             # 0: off; 1: on
+  showcamerapose: 0       # 0: off; 1: on
+
+  # Screen LOC=RELOC profile. Odin loads relocalization_map_abs_path and publishes
+  # the map/odom TF after relocalization succeeds; pure-odom fallback is disabled.
+  custom_map_mode: 2      # 0: Odometry mode 1: SLAM mode 2: Relocalization mode.
+  custom_init_pos: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+  custom_init_pose_search_radius: 4.0 # max position offset in meters, recommended <= 10
+  custom_init_pose_max_rot_deg: 180.0 # max rotation offset in degrees, up to 180
+  relocalization_map_abs_path: "/absolute/path/to/1hao.bin" # required for Relocalization mode; edit on the target computer
+
+  # To get the mapping result file, please use the set_param.sh script provided: "./set_param.sh save_map 1"
+  mapping_result_dest_dir: "" # "": if not specified, save to default location of {ws}/src/odin_ros_driver/map/{driver_start_time}/
+  mapping_result_file_name: "" # "": if not specified, save to location above with default file name of map_{map_save_time}.bin
+
+  # Image mask transfer settings
+  sendimagemask: 0        # 0: off; 1: on - transfer image mask to device on startup
+  image_mask_abs_path: "" # absolute path to the image mask file (e.g., /path/to/mask.png(1600x1296 resolution)
+
+  # Algorithm reset settings
+  resetalgo: 0            # 0: off; 1: on - send algo_reset command to device on startup

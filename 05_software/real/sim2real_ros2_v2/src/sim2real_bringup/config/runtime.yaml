@@ -4,7 +4,29 @@
     motor_hz: 200.0
     status_hz: 10.0
     target_timeout_ms: 150.0
-    model_path: policies/model_rough.onnx
+    event_log_dir: "logs_v2_web"
+    model_engine_path: policies/model_9600_fp16.engine
+    prefer_tensorrt: true
+    model_path: policies/model_9600.onnx
+    rough_model_engine_path: policies/model_9600_fp16.engine
+    crawl_model_path: policies/model_crawl.onnx
+    crawl_model_engine_path: ""
+    rough_default_dof_pos: [0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.550, -1.125, 0.0, 0.0, 0.0, 0.0]
+    crawl_backend: "ik"
+    crawl_default_dof_pos: [0.2, 1.697, -2.650, -0.2, 1.697, -2.650, 0.2, 1.697, -2.650, -0.2, 1.697, -2.650, 0.0, 0.0, 0.0, 0.0]
+    crawl_ik_wheel_linear_gain: 6.25
+    crawl_ik_wheel_yaw_gain: 4.0
+    crawl_ik_max_wheel_speed: 6.0
+    crawl_ik_abduction_clip: 0.45
+    model_switch_transition_s: 1.5
+    model_switch_to_stand_transition_scale: 2.0
+    model_switch_to_model_transition_scale: 2.5
+    model_switch_stand_hold_s: 0.8
+    model_switch_stand_max_err: 0.18
+    model_switch_stand_max_vel: 0.8
+    model_switch_release_scale: 2.0
+    debug_trace_enabled: true
+    debug_trace_decimation: 1
     use_cuda: true  # 启用 CUDA Execution Provider（Orin Nano GPU 加速）
     contract_file: deployment_contract.yaml
     dry_run: false
@@ -21,7 +43,7 @@
     remote_axis_deadzone: 40
     remote_active_threshold: 40
     remote_axis_full_scale: 660.0
-    remote_max_vx: 0.8
+    remote_max_vx: 0.85
     remote_max_vy: 0.3
     remote_max_yaw_rate: 0.5
     remote_invert_vx: true
@@ -30,6 +52,11 @@
     remote_publish_inactive_zero: true
     remote_estop_latch: true
     remote_poll_hz: 50.0
+    remote_model_switch_enabled: true
+    remote_model_switch_channel: 10
+    remote_model_switch_debounce_frames: 3
+    remote_model_switch_rough_level: "low"
+    remote_model_switch_ik_level: "high"
 
     # Command mux parameters
     cmd_mux_default_mode: "NAV"
@@ -64,18 +91,43 @@
     # Safety parameters
     safety_enabled: true
     max_target_offset: 0.6
+    model_switch_max_target_offset: 1.8
     hard_target_offset: 2.0
-    max_ang_vel: 10.0
+    max_ang_vel: 24.0
     max_tilt_z: -0.3
     clip_to_brake: 0
     imu_age_warn_ms: 60.0
     imu_age_stop_ms: 200.0
+    wheel_no_effect_command_threshold: 1.0
+    wheel_no_effect_min_response_ratio: 0.20
+    wheel_no_effect_velocity_epsilon: 0.25
+    wheel_no_effect_max_temperature_c: 90.0
+    wheel_no_effect_min_bus_voltage_v: 18.0
+    wheel_no_effect_command_warmup_cycles: 12
+    wheel_no_effect_trigger_cycles: 30
+    wheel_no_effect_attempt_limit: 2
+    wheel_no_effect_cooldown_ms: 1200
+    wheel_recovery_verify_timeout_ms: 180
+    wheel_no_effect_diag_freshness_ms: 350
+    wheel_no_effect_diag_request_period_ms: 80
+    leg_no_effect_position_error_threshold: 0.18
+    leg_no_effect_velocity_epsilon: 0.12
+    leg_no_effect_max_estimated_current_arms: 4.0
+    leg_no_effect_max_abs_torque_nm: 5.0
+    leg_no_effect_max_temperature_c: 100.0
+    leg_no_effect_min_bus_voltage_v: 18.0
+    leg_no_effect_command_warmup_cycles: 40
+    leg_no_effect_trigger_cycles: 25
+    leg_no_effect_attempt_limit: 2
+    leg_no_effect_cooldown_ms: 1200
+    leg_recovery_verify_timeout_ms: 220
 
     # Policy alignment with the Python deployment
     command_release_s: 0.35
     release_command_hold_s: 0.12
     release_posture_max_err: 0.35
     release_target_blend_s: 0.30
+    model_switch_release_scale: 2.0
     clip_obs: 100.0
     hold_zero_command_pose: true
     enable_zero_cmd_suppression: true
@@ -84,6 +136,7 @@
 
     # Simple navigation parameters
     nav_map_frame: "map"
+    nav_odom_frame: "odom"
     nav_base_frame: "base_link"
     nav_control_hz: 20.0
     nav_goal_tolerance: 0.20
@@ -92,9 +145,51 @@
     nav_max_wz: 0.80
     nav_kp_dist: 0.80
     nav_kp_yaw: 1.80
+    nav_goal_exit_tolerance_margin: 0.08
+    nav_goal_complete_stable_cycles: 4
+    nav_final_align_kp_yaw_scale: 0.60
+    nav_final_align_max_wz: 0.45
+    nav_final_align_creep_speed: 0.05
+    nav_goal_yaw_tolerance_deg: 12.0
+    nav_astar_enabled: true
+    nav_astar_resolution: 0.10
+    nav_astar_pcd_sample_step: 5
+    nav_astar_allow_diagonal: true
+    nav_astar_smooth_enabled: true
+    nav_astar_corner_blend_dist: 0.20
+    nav_astar_waypoint_reach_dist: 0.18
+    nav_astar_lookahead_dist: 0.35
+    nav_astar_snap_radius: 0.60
+    nav_astar_max_expansions: 120000
+    nav_turn_in_place_enabled: true
+    nav_turn_in_place_enter_yaw_deg: 70.0
+    nav_turn_in_place_exit_yaw_deg: 18.0
+    nav_turn_in_place_max_wz: 0.80
+    nav_pre_dock_enabled: true
+    nav_pre_dock_distance: 0.35
+    nav_pre_dock_tolerance: 0.18
+    nav_pre_dock_skip_within_goal_dist: 0.45
     nav_goals_file: src/sim2real_nav2/config/maps/factory_a/goals.yaml
     nav_missions_file: src/sim2real_nav2/config/maps/factory_a/missions.yaml
-    pcd_nav_file: map/map1.pcd
+    # Keep the legacy YAML route for reference; active task is selected by nav_route_task_file below.
+    nav_route_file: src/sim2real_nav2/config/maps/a_min/test_route.yaml
+    # Task switch entry: change this path to another .json/.yaml route file, then relaunch or reload the nav nodes.
+    # The web "odom" button uses the first waypoint of this route as the fixed odom fallback start pose.
+    nav_route_task_file: map/routes/A_min/A_min_route.json
+    nav_route_auto_align_enabled: false
+    nav_route_rotation_offset_deg: 0.0
+    nav_route_align_max_angle_deg: 6.0
+    nav_route_align_angle_step_deg: 0.5
+    nav_route_align_search_radius: 0.35
+    odom_fallback_require_odom_fresh: true
+    odom_fallback_max_odom_age_ms: 500.0
+    odom_fallback_block_existing_map_odom_tf: true
+    odom_fallback_tf_conflict_window_s: 1.0
+    odom_fallback_tf_conflict_xy_tolerance: 0.05
+    odom_fallback_tf_conflict_yaw_tolerance_deg: 2.0
+    # Keep odom fallback running if Odin relocalizes mid-task; hand off after mission end or Exit odom.
+    odom_fallback_stop_on_external_tf: false
+    pcd_nav_file: map/A_min.pcd
     pcd_floor_z_min: -1.6
     pcd_floor_z_max: 0.4
     pcd_sample_step: 25

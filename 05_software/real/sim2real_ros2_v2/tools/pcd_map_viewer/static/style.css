@@ -1,0 +1,191 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+  background: #0d1117;
+  color: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  overflow: hidden;
+}
+
+.sidebar {
+  background: #111827;
+  border-right: 1px solid #263244;
+  padding: 16px;
+  overflow: auto;
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 14px;
+  margin: 18px 0 8px;
+  color: #cbd5e1;
+  letter-spacing: 0;
+}
+
+label {
+  display: block;
+  margin: 10px 0 6px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+select,
+input,
+button {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #344256;
+  background: #0b1220;
+  color: #e5e7eb;
+  border-radius: 6px;
+  padding: 0 10px;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: #1f2937;
+}
+
+button:hover {
+  background: #2f3b4d;
+}
+
+.buttonRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.buttonRow:has(button:nth-child(2):last-child) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.formGrid label {
+  margin: 0;
+}
+
+pre {
+  min-height: 112px;
+  margin: 0;
+  padding: 10px;
+  background: #070b12;
+  border: 1px solid #263244;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: #a7f3d0;
+}
+
+#waypointList,
+#obstacleList {
+  padding-left: 22px;
+  margin: 10px 0 0;
+}
+
+#waypointList li,
+#obstacleList li {
+  padding: 6px 4px;
+  border-bottom: 1px solid #263244;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#waypointList li.active,
+#obstacleList li.active {
+  color: #67e8f9;
+  background: #102033;
+}
+
+.main {
+  position: relative;
+  background: #0b0f17;
+  overflow: hidden;
+}
+
+#mapCanvas,
+#cloudCanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.main.view-3d #cloudCanvas {
+  z-index: 1;
+}
+
+.main.view-3d #mapCanvas {
+  z-index: 2;
+  background: transparent;
+  pointer-events: none;
+}
+
+.main.view-2d #mapCanvas {
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.main.view-2d #cloudCanvas {
+  z-index: 0;
+}
+
+#mapCanvas.hidden,
+#cloudCanvas.hidden {
+  display: none;
+}
+
+.hud {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+.hud span,
+#serverState {
+  border: 1px solid #344256;
+  background: rgba(8, 13, 22, 0.82);
+  color: #cbd5e1;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+}

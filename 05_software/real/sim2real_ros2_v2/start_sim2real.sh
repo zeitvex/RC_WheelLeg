@@ -72,4 +72,3 @@ fi
 # 4. Run the ROS2 Launch file
 echo -e "${GREEN}[Launch] Starting sim2real launch file...${NC}"
 ros2 launch sim2real_bringup sim2real_system.launch.py "$@"
-

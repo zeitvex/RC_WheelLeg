@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PCD Obstacle Terrain Editor</title>
+    <link rel="stylesheet" href="./style.css?v=obstacle-terrain-2">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="title">
+        <h1>Obstacle Terrain Editor</h1>
+        <span id="serverState">obstacle-ui loading</span>
+      </div>
+
+      <label>Map</label>
+      <select id="mapSelect"></select>
+
+      <div id="layerControls" class="hidden">
+        <label>Layer</label>
+        <select id="layerSelect"></select>
+      </div>
+
+      <label>View</label>
+      <select id="viewSelect">
+        <option value="3d" selected>3D map</option>
+        <option value="2d">2D layers</option>
+      </select>
+
+      <label>3D Mode</label>
+      <select id="cloudModeSelect">
+        <option value="points" selected>Point cloud</option>
+        <option value="voxels">Occupied voxels</option>
+      </select>
+
+      <div class="buttonRow">
+        <button id="fitBtn" title="Fit map">Fit</button>
+        <button id="reloadBtn" title="Reload maps">Reload</button>
+      </div>
+
+      <section>
+        <h2>Point Cloud</h2>
+        <div class="formGrid">
+          <label>Z Min</label><input id="cloudZMin" type="number" step="0.1" value="-2.0">
+          <label>Z Max</label><input id="cloudZMax" type="number" step="0.1" value="1.0">
+          <label>Max Pts</label><input id="cloudMaxPoints" type="number" step="1000" value="120000">
+          <label>Voxel</label><input id="voxelSize" type="number" step="0.01" value="0.20">
+          <label>Min Pts</label><input id="voxelMinPoints" type="number" step="1" value="1">
+          <label>Cluster</label><input id="voxelMinCluster" type="number" step="1" value="1">
+        </div>
+      </section>
+
+      <section>
+        <h2>Cursor</h2>
+        <pre id="cursorInfo">-</pre>
+      </section>
+
+      <section>
+        <h2>Waypoint</h2>
+        <input id="routeName" placeholder="route name" value="test_route">
+        <div class="formGrid">
+          <label>X</label><input id="wpX" type="number" step="0.01">
+          <label>Y</label><input id="wpY" type="number" step="0.01">
+          <label>Yaw</label><input id="wpYaw" type="number" step="1" value="0">
+          <label>Terrain</label><input id="wpObstacle" value="flat" readonly>
+          <label>Speed</label><input id="wpSpeed" type="number" step="0.05" value="0.35">
+          <label>Policy</label>
+          <select id="wpPolicy">
+            <option value="rough">rough</option>
+            <option value="crawl">crawl</option>
+          </select>
+          <label>Tol</label><input id="wpTol" type="number" step="0.01" value="0.15">
+          <label>Yaw Tol</label><input id="wpYawTol" type="number" step="1" value="30">
+          <label>Require Yaw</label><input id="wpRequireYaw" type="checkbox">
+          <label>PreDock Dist</label><input id="wpPreDockDist" type="number" step="0.01" value="0.35">
+          <label>PreDock Tol</label><input id="wpPreDockTol" type="number" step="0.01" value="0.18">
+        </div>
+        <div class="buttonRow">
+          <button id="updateWpBtn">Update</button>
+          <button id="deleteWpBtn">Delete</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Obstacle</h2>
+        <label>Region</label>
+        <select id="obstacleSelect"></select>
+        <div class="formGrid">
+          <label>Name</label><input id="obstacleName" value="obstacle_1">
+          <label>Type</label>
+          <select id="obstacleType">
+            <option value="rough_pit">rough_pit</option>
+            <option value="wall">wall</option>
+            <option value="low_bar">low_bar</option>
+            <option value="stairs">stairs</option>
+            <option value="ramp">ramp</option>
+            <option value="bridge_a">bridge_a</option>
+            <option value="bridge_b">bridge_b</option>
+            <option value="slalom">slalom</option>
+            <option value="return_home">return_home</option>
+          </select>
+          <label>X</label><input id="obstacleX" type="number" step="0.01">
+          <label>Y</label><input id="obstacleY" type="number" step="0.01">
+          <label>Yaw</label><input id="obstacleYaw" type="number" step="1" value="0">
+          <label>Length</label><input id="obstacleLength" type="number" step="0.05" value="1.00">
+          <label>Width</label><input id="obstacleWidth" type="number" step="0.05" value="1.00">
+          <label>Policy</label>
+          <select id="obstaclePolicy">
+            <option value="rough">rough</option>
+            <option value="crawl">crawl</option>
+          </select>
+        </div>
+        <div class="buttonRow">
+          <button id="drawObstacleBtn">Draw</button>
+          <button id="updateObstacleBtn">Update</button>
+          <button id="deleteObstacleBtn">Delete</button>
+        </div>
+        <ol id="obstacleList"></ol>
+      </section>
+
+      <section>
+        <h2>Route</h2>
+        <div class="buttonRow">
+          <button id="clearRouteBtn">Clear</button>
+          <button id="exportJsonBtn">Export</button>
+          <button id="saveRouteBtn">Save</button>
+        </div>
+        <ol id="waypointList"></ol>
+      </section>
+    </aside>
+
+    <main class="main view-3d">
+      <canvas id="mapCanvas"></canvas>
+      <canvas id="cloudCanvas"></canvas>
+      <div class="hud">
+        <span>Click cloud: add/select waypoint</span>
+        <span>Draw: drag 2D / click 3D obstacle</span>
+        <span>Wheel: zoom</span>
+        <span>Drag: orbit 3D / pan 2D</span>
+        <span>Shift + drag: set yaw</span>
+      </div>
+    </main>
+
+    <script type="module" src="./app.js?v=obstacle-terrain-2"></script>
+  </body>
+</html>

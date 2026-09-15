@@ -12,6 +12,7 @@ from typing import Optional
 
 STATE_LOCK = threading.Lock()
 LATEST_STATE: dict = {"type": "state", "connected": False}
+LATEST_MAP: Optional[dict] = None
 NANO_ADDR: tuple[str, int]
 UDP_SOCK: socket.socket
 
@@ -24,11 +25,14 @@ class Handler(SimpleHTTPRequestHandler):
             self._json(200, data)
             return
         if self.path == "/api/map":
+            global LATEST_MAP
+            with STATE_LOCK:
+                LATEST_MAP = None
             send_udp({"type": "map_request", "stamp": time.time()})
             deadline = time.time() + 1.0
             while time.time() < deadline:
                 with STATE_LOCK:
-                    maybe_map = LATEST_STATE.get("map")
+                    maybe_map = LATEST_MAP
                 if isinstance(maybe_map, dict):
                     data = json.dumps(maybe_map).encode("utf-8")
                     self._json(200, data)
@@ -69,7 +73,7 @@ def send_udp(payload: dict) -> None:
 
 
 def udp_rx_loop(sock: socket.socket) -> None:
-    global LATEST_STATE
+    global LATEST_STATE, LATEST_MAP
     while True:
         try:
             data, _ = sock.recvfrom(65535)
@@ -77,7 +81,10 @@ def udp_rx_loop(sock: socket.socket) -> None:
             payload["connected"] = True
             payload["local_receive_time"] = time.time()
             with STATE_LOCK:
-                LATEST_STATE = payload
+                if payload.get("type") == "map":
+                    LATEST_MAP = payload
+                else:
+                    LATEST_STATE = payload
         except Exception:
             time.sleep(0.01)
 
