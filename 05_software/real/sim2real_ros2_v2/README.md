@@ -1,6 +1,6 @@
 # ROS 2 Sim2Real v2：里程计导航联调
 
-本目录归档 `real/sim2real_ros2_v2(odom)`，对应重排主线的 `v0.12.0`。该阶段在 `v0.11.1` 的 Odin/TensorRT 与站姿调参基础上，固定纯里程计模式，增加 odom fallback 的 TF 冲突保护、A_min 路线和地图工具。
+本目录归档原始 `real/sim2real_ros2_v2(odom)`，对应 `v0.12.0`。该阶段在 `v0.11.1` 的 Odin/TensorRT 与站姿调参基础上，固定纯里程计模式，增加 odom fallback 的 TF 冲突保护、A_min 路线和地图工具。
 
 本工程保留当前 `sim2real` 已验证的部署契约，同时将运行时热路径迁移到 C++：
 

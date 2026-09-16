@@ -1,11 +1,13 @@
 # `sim2real`
 
-当前版本只部署现在这套 `53D -> 16D` 模型，不再兼容旧版 `crawl`、多策略和历史观测。
+本目录是第一代 Python Sim2Real 快照，对应 `v0.3.0`。下文“当前”均指该历史快照，不指仓库 `main` 的最终 ROS 2 v3。
+
+该快照只部署当时的 `53D -> 16D` Rough 模型，不兼容更早的 Crawl、多策略和其他历史观测契约。
 
 ## 当前部署模型
 
-- 使用文件：`sim2real/policies/model_rough.pt`
-- 来源文件：`model_2000.pt`
+- 使用文件：`policies/model_rough.pt`
+- 原始说明记录的来源名：`model_2000.pt`；该同名源文件未随本目录归档，仓库只保留重命名后的 `policies/model_rough.pt`
 
 ## 当前 actor 输入
 
@@ -52,7 +54,7 @@
 
 ## 启动命令
 
-默认前提：当前目录就是 `sim2real/`
+默认前提：当前目录是 `05_software/real/sim2real/`
 
 纯 `python`：
 
@@ -65,13 +67,12 @@ python main.py
 python web/server.py --host 0.0.0.0 --port 8080
 ```
 
-Windows 本机：
+Windows 本机可使用目标虚拟环境中的 Python；不要依赖个人机器的绝对安装路径：
 
 ```bash
-D:\Minicoda3\envs\py10\python.exe -m pip install -r requirements-orin.txt
-D:\Minicoda3\envs\py10\python.exe tools\alignment_check.py --policy policies\model_rough.pt --manifest deployment_manifest.yaml
-D:\Minicoda3\envs\py10\python.exe tools\standalone_check.py
-D:\Minicoda3\envs\py10\python.exe main.py
-D:\Minicoda3\envs\py10\python.exe web\server.py --host 0.0.0.0 --port 8080
+python -m pip install -r requirements-orin.txt
+python tools\alignment_check.py --policy policies\model_rough.pt --manifest deployment_manifest.yaml
+python tools\standalone_check.py
+python main.py
+python web\server.py --host 0.0.0.0 --port 8080
 ```
-#sim2real/policies/model_rough.pt

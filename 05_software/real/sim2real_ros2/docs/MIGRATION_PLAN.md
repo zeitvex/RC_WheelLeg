@@ -1,5 +1,7 @@
 # 迁移计划
 
+> 版本范围：ROS 2/C++ 初版（`v0.10.0`）。这是历史迁移记录，不是最终比赛版验收报告；本快照未归档 Odin 驱动源码。
+
 ## Phase 1: 硬件核心迁移 ✅ 已完成
 
 将当前高频热路径从 Python 迁出。
@@ -39,11 +41,7 @@
 
 ## Phase 3: ROS 2 系统集成 ✅ 已完成
 
-参考的源项目：
-
-- `00_ reference/odin_ros_driver`
-- `00_ reference/EDULITE_A3/el_a3_ros`
-- `00_ reference/rl_sar`
+参考过的外部项目包括 Odin ROS 驱动、EDULITE A3 ROS 工程和 RL-SAR；这些外部参考目录不属于本仓库公开内容。
 
 交付物：
 
@@ -76,5 +74,5 @@
 | 策略运行时 | `sim2real_runtime_node` | 50Hz ONNX 推理 + 53D 观测 + raw_action clip |
 | 里程计中继 | `odom_relay_node` | /odin1/odometry → /odom + odom→base_link TF |
 | 导航栈 | Nav2 全套节点 | AMCL + costmap + DWB + Navfn + BT + lifecycle |
-| 传感器驱动 | `odin_ros_driver` | IMU + 点云 + 里程计原始发布 |
-| 点云转换 | `pointcloud_to_laserscan` | /odin1/cloud_slam → /scan (供 AMCL 使用) |
+| 传感器驱动 | 外部 Odin 驱动 | 本快照未归档源码，不能视为自包含组件 |
+| 点云转换 | `pointcloud_to_laserscan` | 外部 ROS 包；/odin1/cloud_slam → /scan（供 AMCL 使用） |

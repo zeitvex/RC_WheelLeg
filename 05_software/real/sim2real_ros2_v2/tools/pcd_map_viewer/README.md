@@ -9,7 +9,7 @@ This is not the Nano runtime Web UI. Use it before a run to inspect the map and 
 From the repository root:
 
 ```powershell
-python .\tools\pcd_map_viewer\server.py --http-port 8090
+python .\05_software\real\sim2real_ros2_v2\tools\pcd_map_viewer\server.py --http-port 8090
 ```
 
 Open:
@@ -84,21 +84,15 @@ waypoints:
     obstacle_name: wall_1
 ```
 
-Default runtime route:
+The current `v0.12.0` runtime route is configured separately in `src/sim2real_bringup/config/runtime.yaml`:
 
 ```text
-map/routes/map1/test_route.yaml
+map/routes/A_min/A_min_route.json
 ```
 
-## Runtime Test
-
-```bash
-ros2 topic pub --once /route_runner/cmd std_msgs/msg/String "{data: reload}"
-ros2 topic pub --once /route_runner/cmd std_msgs/msg/String "{data: start}"
-ros2 topic pub --once /route_runner/cmd std_msgs/msg/String "{data: stop}"
-```
+The editor can also save YAML, but the archived runtime does not provide the `/route_runner/cmd` interface described by an earlier draft. Use the current JSON task file and Web/navigation controls documented by this snapshot.
 
 See also:
 
-- [Maps And Routes](../../docs/ROUTES_AND_MAPS.md)
-- [Common Commands](../../docs/COMMANDS.md)
+- [Archived map data](../../map/README.md)
+- [ROS 2 v2 snapshot](../../README.md)

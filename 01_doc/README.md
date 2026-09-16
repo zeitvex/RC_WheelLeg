@@ -2,13 +2,14 @@
 
 本目录用于保存 16DOF 轮足项目自身的技术文档和使用说明。
 
-后续建议按主题组织：
+当前文档结构：
 
 ```text
 01_doc/
-├─ architecture/   # 系统架构和数据流
-├─ control/        # 控制与强化学习原理
-├─ deployment/     # Sim2Sim 和 Sim2Real 部署
-├─ hardware/       # 接线、标定和硬件兼容性
-└─ user_guide/     # 安装、运行和调试说明
+├─ architecture/
+│  └─ early_software_stack.md  # 第一代训练—仿真—真机闭环
+├─ training_evolution.md       # v0.4～v0.6 训练架构演进
+└─ version_history.md          # 全项目 Tag 与里程碑
 ```
+
+具体运行说明放在对应工程目录内，避免在顶层重复并逐渐失真：训练见 `05_software/train/rc_mjlab/`，真机部署见 `05_software/real/`。

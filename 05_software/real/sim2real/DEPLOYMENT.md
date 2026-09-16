@@ -1,10 +1,12 @@
 # `sim2real` 部署说明
 
+> 版本范围：第一代 Python Sim2Real（`v0.3.0`）。本文“当前”均指该快照。
+
 ## 模型
 
 当前只使用：
 
-- `sim2real/policies/model_rough.pt`
+- `policies/model_rough.pt`
 
 ## 模型契约
 
@@ -38,7 +40,7 @@
 
 ## 纯 Python 命令
 
-默认前提：当前目录就是 `sim2real/`
+默认前提：当前目录是 `05_software/real/sim2real/`
 
 ```bash
 python -m pip install -r requirements-orin.txt

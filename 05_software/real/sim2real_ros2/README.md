@@ -1,6 +1,6 @@
 # ROS 2/C++ Sim2Real 初版
 
-本目录归档 `real/sim2real_ros2`，对应重排主线的 `v0.10.0`。这是轮腿机器人 Sim2Real 部署栈从 Python 运行时迁移到 ROS 2 + C++ 的第一版系统工程。
+本目录归档 `real/sim2real_ros2`，对应 `v0.10.0`。这是轮腿机器人 Sim2Real 部署栈从 Python 运行时迁移到 ROS 2 + C++ 的第一版系统工程。
 
 本工程保留当前 `sim2real` 已验证的部署契约，同时将运行时热路径迁移到 C++：
 
@@ -26,7 +26,7 @@
 - `src/sim2real_bringup`
   统一启动文件与运行时参数配置。
 - `src/odin_ros_driver`
-  Odin 传感器 ROS 2 驱动（含 IMU、点云、里程计发布）。
+  仅保留依赖边界说明；原始 `v0.10.0` 快照没有归档 Odin 驱动源码，不能独立提供 IMU、点云和里程计发布。
 - `docs`
   架构说明与迁移计划。
 
@@ -58,11 +58,11 @@ Nav2 / cmd_vel  ------------------------------>  sim2real_runtime
 
 迁移过程中以下文件被视为真值源：
 
-- `sim2real/deployment_manifest.yaml`
-- `sim2real/interface/motor_mapping.py`
-- `sim2real/interface/real_io.py`
-- `sim2real/policy/policy_runner.py`
-- `sim2real/web/session.py`
+- `../sim2real/deployment_manifest.yaml`
+- `../sim2real/interface/motor_mapping.py`
+- `../sim2real/interface/real_io.py`
+- `../sim2real/policy/policy_runner.py`
+- `../sim2real/web/session.py`
 
 ## 注意事项
 

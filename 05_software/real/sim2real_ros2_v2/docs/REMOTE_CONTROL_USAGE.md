@@ -1,6 +1,6 @@
-# sim2real_ros2 遥控器调用说明
+# sim2real_ros2_v2 遥控器调用说明
 
-本文档说明如何在 `sim2real_ros2` 中调用已接入的 SBUS UART 遥控器节点，以及执行后系统会产生什么效果。
+本文档说明如何在 `sim2real_ros2_v2` 中调用已接入的 SBUS UART 遥控器节点，以及执行后系统会产生什么效果。
 
 ## 1. 当前接入关系
 

@@ -1,10 +1,12 @@
 ﻿# `FACTS_AND_ASSUMPTIONS`
 
+> 版本范围：Python Sim2Real v2（`v0.9.0`）。事实项只适用于该快照。
+
 ## 已确认
 
-- 当前部署模型：默认优先使用 `sim2real/policies/model_rough.onnx`
-- 当前源模型/fallback：`sim2real/policies/model_rough.pt`
-- 源模型：`model_2000.pt`
+- 当前部署模型：默认优先使用 `policies/model_rough.onnx`
+- 当前源模型/fallback：`policies/model_rough.pt`
+- 原始说明记录的源模型名：`model_2000.pt`；同名文件未随本目录归档
 - actor 输入：`53D`
 - actor 输出：`16D`
 - 当前 actor 不吃 `base_lin_vel`

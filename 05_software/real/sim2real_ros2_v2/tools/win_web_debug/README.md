@@ -15,7 +15,7 @@ Use this tool only when you want the browser and HTTP server to run on Windows w
 From the repository root:
 
 ```powershell
-python .\tools\win_web_debug\server.py --nano-host <nano-ip> --http-port 8088
+python .\05_software\real\sim2real_ros2_v2\tools\win_web_debug\server.py --nano-host <nano-ip> --http-port 8088
 ```
 
 Or from this folder:
@@ -40,5 +40,5 @@ src/sim2real_runtime/src/web_udp_bridge_node.py
 
 See:
 
-- [Runtime Web](../../docs/RUNTIME_WEB.md)
-- [Common Commands](../../docs/COMMANDS.md)
+- [Runtime Web and UDP bridge](../../docs/WEB_DEBUG_USAGE.md)
+- [ROS 2 v2 snapshot](../../README.md)

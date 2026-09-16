@@ -1,4 +1,4 @@
-# sim2real_ros2 架构说明
+# sim2real_ros2_v2 架构说明
 
 ## 设计目标
 

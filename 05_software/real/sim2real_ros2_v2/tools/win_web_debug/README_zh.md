@@ -13,7 +13,7 @@ http://<nano-ip>:18080
 在仓库根目录：
 
 ```powershell
-python .\tools\win_web_debug\server.py --nano-host <nano-ip> --http-port 8088
+python .\05_software\real\sim2real_ros2_v2\tools\win_web_debug\server.py --nano-host <nano-ip> --http-port 8088
 ```
 
 打开：
@@ -21,3 +21,5 @@ python .\tools\win_web_debug\server.py --nano-host <nano-ip> --http-port 8088
 ```text
 http://127.0.0.1:8088
 ```
+
+运行时 Web 与 UDP 配置见 [`../../docs/WEB_DEBUG_USAGE.md`](../../docs/WEB_DEBUG_USAGE.md)。

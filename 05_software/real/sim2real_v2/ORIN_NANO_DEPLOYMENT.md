@@ -1,5 +1,7 @@
 # `Orin Nano` 部署说明
 
+> 版本范围：Python Sim2Real v2（`v0.9.0`）。本文不是最终 ROS 2 v3 部署指南。
+
 ## 是否必须转 ONNX
 
 不必须。
@@ -26,7 +28,7 @@
 
 ## 纯 Python 部署命令
 
-默认前提：当前目录就是 `sim2real/`
+默认前提：当前目录是 `05_software/real/sim2real_v2/`
 
 ```bash
 python3 -m pip install -r requirements-orin.txt

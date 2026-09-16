@@ -22,7 +22,7 @@
 
 ## `sim2real_v2`
 
-Python Sim2Real v2，保留 `53D -> 16D` 策略接口，并增加电机反馈新鲜度、Odin odom 诊断、命令平滑、Web 运行时诊断和安全监控工具。该版本对应重排主线的 `v0.9.0`。
+Python Sim2Real v2，保留 `53D -> 16D` 策略接口，并增加电机反馈新鲜度、Odin odom 诊断、命令平滑、Web 运行时诊断和安全监控工具，对应 `v0.9.0`。
 
 部署说明见 [`sim2real_v2/README.md`](sim2real_v2/README.md) 与 [`sim2real_v2/DEPLOYMENT.md`](sim2real_v2/DEPLOYMENT.md)。
 
@@ -40,7 +40,7 @@ Python Sim2Real v2，保留 `53D -> 16D` 策略接口，并增加电机反馈新
 
 `v0.12.0` 仍在同一路径上形成里程计导航联调快照：固定纯里程计模式，加入 odom fallback 的 TF 冲突保护、A_min 路线和多地图工具；默认 Rough 策略为 `model_9600`，默认站姿回到比赛站姿。当前该目录保持 `v0.12.0` 快照，阶段说明见 [`sim2real_ros2_v2/README.md`](sim2real_ros2_v2/README.md)。
 
-### `sim2real_ros2_v3`（最终比赛版，`v1.0.0`）
+### `sim2real_ros2_v3`（最终比赛版；代码快照 `v1.0.0`，规范目录 `v1.1.0`）
 
 第三版来自原始目录 `sim2real_ros2_v2(last_not_slalom_1050)`，整理时正式命名为 `sim2real_ros2_v3`。它是 1050 分比赛最终部署，包含 `model_6800` Rough、`model_84` Wall、最终路线、完整 Odin 驱动、CAN 和触控屏。部署说明见 [`sim2real_ros2_v3/README.md`](sim2real_ros2_v3/README.md)。
 

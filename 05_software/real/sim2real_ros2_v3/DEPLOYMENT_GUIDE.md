@@ -1,6 +1,6 @@
-# ROS2 C++ Sim2Real 运动控制栈 - 部署指南
+# ROS 2/C++ Sim2Real v3 比赛部署指南
 
-本工作区提供了一个自包含、独立的 C++ ROS2 Humble 实现，用于在 Jetson Orin 目标机上部署轮腿四足机器人控制策略。
+本工作区保存最终比赛 ROS 2 Humble/C++ 部署主体。比赛使用的 Odin `1hao.bin` 未随备份归档，TensorRT engine 也与比赛机环境绑定，因此默认 `relocal` 闭环不是开箱即用；缺少真实地图时应按主 README 使用纯里程计模式。
 
 ---
 

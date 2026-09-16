@@ -1,6 +1,6 @@
-# ROS2 C++ Sim2Real 运动控制栈 - 部署指南
+# ROS 2/C++ Sim2Real v2 部署指南
 
-本工作区提供了一个自包含、独立的 C++ ROS2 Humble 实现，用于在 Jetson Orin 目标机上部署轮腿四足机器人控制策略。
+本工作区保存 `v0.12.0` 里程计联调快照，包含 ROS 2 Humble/C++ 主体和 Odin 驱动。系统依赖、设备标定和 TensorRT engine 仍与目标机环境绑定，不能仅凭源码声明在新设备上已复现。
 
 ---
 
@@ -90,7 +90,7 @@ chmod +x start_sim2real.sh
 强烈推荐使用 Docker 隔离依赖，避免 Jetson Orin 上的库版本冲突。
 
 ### 步骤 1：构建镜像
-确保在 `sim2real_ros2` 目录中（包含 `Dockerfile`）：
+确保在 `sim2real_ros2_v2` 目录中（包含 `Dockerfile`）：
 ```bash
 # 使用标准 docker build：
 docker build -t sim2real_ros2:latest .

@@ -1,13 +1,13 @@
 # 真机部署与验证指南
 
-本文档面向当前目录 `shiji/sim2real (10)/sim2real`，用于减少上机排错时间。默认不修改已验证的电机映射、方向、零位和策略观测。
+本文档面向仓库中的 `05_software/real/sim2real_v2`（`v0.9.0`），用于减少上机排错时间。默认不修改该快照中已验证的电机映射、方向、零位和策略观测。
 
 ## 1. 前期环境
 
 推荐在 Orin / Linux 上运行：
 
 ```bash
-cd sim2real
+cd 05_software/real/sim2real_v2
 python -m pip install -r requirements-orin.txt
 ```
 

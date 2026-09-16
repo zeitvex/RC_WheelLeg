@@ -1,0 +1,276 @@
+{
+  "name": "A_min_route",
+  "map": "A_min",
+  "frame_id": "map",
+  "createdAt": "2026-07-04T00:40:56",
+  "segments": [
+    {
+      "name": "segment_1",
+      "obstacle": "slalom",
+      "waypoints": [
+        {
+          "id": 1,
+          "x": 9.3549,
+          "y": 0.9079,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 2,
+          "x": 11.1136,
+          "y": 0.8621,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 3,
+          "x": 13.0,
+          "y": 0.75,
+          "yawDeg": 88.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 4,
+          "x": 12.9102,
+          "y": 2.611,
+          "yawDeg": 90.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 5,
+          "x": 12.9102,
+          "y": 4.88,
+          "yawDeg": 190.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 6,
+          "x": 11.94,
+          "y": 4.6203,
+          "yawDeg": 178.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 7,
+          "x": 10.65,
+          "y": 4.65,
+          "yawDeg": 178.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 8,
+          "x": 9.3997,
+          "y": 4.649,
+          "yawDeg": -95.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 9,
+          "x": 9.3092,
+          "y": 3.8864,
+          "yawDeg": 180.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 10,
+          "x": 7.9263,
+          "y": 4.0028,
+          "yawDeg": 150.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 11,
+          "x": 6.8148,
+          "y": 4.6619,
+          "yawDeg": 170.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 12,
+          "x": 5.0054,
+          "y": 5.0,
+          "yawDeg": 180.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 13,
+          "x": 3.2994,
+          "y": 5.04,
+          "yawDeg": 185.0,
+          "speed": 0.7,
+          "policy": "crawl",
+          "tolerance": 0.15
+        },
+        {
+          "id": 14,
+          "x": 1.8838,
+          "y": 4.8455,
+          "yawDeg": 190.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 15,
+          "x": 1.06,
+          "y": 4.45,
+          "yawDeg": 270.0,
+          "speed": 0.35,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 16,
+          "x": 1.0561,
+          "y": 3.9,
+          "yawDeg": -90.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 17,
+          "x": 1.04,
+          "y": 2.79,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 18,
+          "x": 1.552,
+          "y": 2.77,
+          "yawDeg": -90.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 19,
+          "x": 1.519,
+          "y": 1.6677,
+          "yawDeg": 180.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 20,
+          "x": 0.4708,
+          "y": 1.6677,
+          "yawDeg": -90.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 21,
+          "x": 0.4552,
+          "y": 0.5,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 22,
+          "x": 1.2783,
+          "y": 0.5,
+          "yawDeg": 90.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 23,
+          "x": 1.2628,
+          "y": 1.6211,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 24,
+          "x": 2.3576,
+          "y": 1.5978,
+          "yawDeg": -90.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 25,
+          "x": 2.3265,
+          "y": 0.5,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 26,
+          "x": 3.12,
+          "y": 0.5,
+          "yawDeg": 45.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 27,
+          "x": 3.8639,
+          "y": 0.9844,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 28,
+          "x": 6.8222,
+          "y": 0.9145,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        },
+        {
+          "id": 29,
+          "x": 9.5321,
+          "y": 0.9223,
+          "yawDeg": 0.0,
+          "speed": 0.7,
+          "policy": "rough",
+          "tolerance": 0.15
+        }
+      ]
+    }
+  ],
+  "yawToleranceDegDefault": 30.0
+}

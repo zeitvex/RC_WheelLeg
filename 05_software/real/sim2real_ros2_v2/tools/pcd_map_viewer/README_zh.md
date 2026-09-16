@@ -7,7 +7,7 @@
 在仓库根目录：
 
 ```powershell
-python .\tools\pcd_map_viewer\server.py --http-port 8090
+python .\05_software\real\sim2real_ros2_v2\tools\pcd_map_viewer\server.py --http-port 8090
 ```
 
 打开：
@@ -26,3 +26,7 @@ http://127.0.0.1:8090
 - `tolerance`
 
 不保存 `z` 和 `action`。
+
+当前 `v0.12.0` 运行配置使用 `map/routes/A_min/A_min_route.json`。编辑器也能保存 YAML，但本快照没有旧文档曾描述的 `/route_runner/cmd` 控制接口。
+
+地图抽样边界见 [`../../map/README.md`](../../map/README.md)，版本说明见 [`../../README.md`](../../README.md)。

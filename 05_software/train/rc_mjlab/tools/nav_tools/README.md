@@ -63,6 +63,8 @@ uv run --with-requirements .\sim2sim\requirements.txt `
 | `pcd/1hao.pcd` | 9,163,893 | 46 | 199,215 | 9,876,010 B | `48B231C52BECA51316F352300C8B2046133E92359E0855227D93DEB0D927AD34` |
 | `pcd/2hao.pcd` | 10,043,048 | 52 | 193,136 | 9,719,736 B | `714516A7A726D46311A58507149FBC93D622616BE79C59FFED622274D6526B1F` |
 
+表中的大小和 SHA-256 对应 Git 仓库保存的 LF 字节。Windows 若使用 `core.autocrlf=true`，旧检出可能把 ASCII PCD 转成 CRLF，导致工作区大小和哈希变化；仓库通过根目录 `.gitattributes` 将 `*.pcd` 标记为不做文本换行转换。已有旧工作区需要重新检出后再核对哈希。
+
 复现抽样：
 
 ```powershell
