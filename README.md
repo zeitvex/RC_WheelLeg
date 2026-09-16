@@ -1,8 +1,6 @@
-# RC_WheelLeg
+关键词：ROBOCON、四足、四轮足、仿生足式、强化学习、RL、Mjlab、Mujoco、Odin1、sim2sim、sim2real。
 
 山东华宇工学院 HYNova 战队轮足机器人项目的开源仓库。
-
-关键词：ROBOCON、四足、四轮足、仿生足式、强化学习、RL、Mjlab、Mujoco、Odin1、sim2sim、sim2real。
 
 我们是一支从零起步的新队伍。从社团初创到战队成立，从学校历史上首次电赛国一，到 RC 国一，一路走来积累了机械、硬件、控制、仿真和强化学习方面的实践经验。我们将备赛过程中整理出的机械、硬件、软件、BOM、装配资料及各类注意事项逐步开源，希望为起步较晚、正在准备 Robocon 的队伍提供参考。
 
